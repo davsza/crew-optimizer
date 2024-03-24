@@ -1,0 +1,21 @@
+set Workers := W1 W2 W3 W4 W5;	# Example workers
+set Days := MON THU WED THR FRI SAT SUN;	# Example days
+
+param min_workers:=
+    MON 4
+    THU 4
+    WED 4
+    THR 4
+    FRI 4
+    SAT 2
+    SUN 2;
+
+param penalty := 10;
+
+param application :
+		MON THU WED THR FRI SAT SUN :=
+	W1 0 0 1 1 1 1 1
+	W2 0 0 1 1 1 1 1
+	W3 0 0 1 1 1 1 1
+	W4 0 0 1 1 1 1 1
+	W5 0 0 1 1 1 1 1;
