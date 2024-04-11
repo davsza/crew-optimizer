@@ -1,8 +1,10 @@
 DAYS_TO_WORK_PER_WEEK = 5
 
+
 def get_workers(number_of_workers: int):
     # dummy data, will be changed to db access
     return [f"W{i:02d}" for i in range(1, number_of_workers + 1)]
+
 
 def get_days():
     return [(i + 1) for i in range(7)]

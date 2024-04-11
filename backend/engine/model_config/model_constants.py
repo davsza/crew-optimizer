@@ -1,3 +1,5 @@
+DAYS_TO_WORK_PER_WEEK = 5
+
 SET_WORKERS = "set WORKERS ordered;	# Set of workers"
 SET_SHIFTS = "set SHIFTS ordered;	# Set of shifts"
 SET_DAYS = "set DAYS ordered;	# Set of days"
