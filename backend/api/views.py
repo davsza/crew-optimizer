@@ -1,33 +1,42 @@
 from django.shortcuts import render
 from django.contrib.auth.models import User
 from rest_framework import generics
-from .serializers import UserSerializer, NoteSerializer
+from .serializers import UserSerializer, ShiftSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Note
+from .models import Shift
 
 
-class NoteListCreate(generics.ListCreateAPIView):
-    serializer_class = NoteSerializer
+class ShiftListCreate(generics.ListCreateAPIView):
+    serializer_class = ShiftSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
-        return Note.objects.filter(author=user)
+        return Shift.objects.filter(owner=user)
 
     def perform_create(self, serializer):
         if serializer.is_valid():
-            serializer.save(author=self.request.user)
+            existing_shift = Shift.objects.filter(owner=self.request.user)
+            print(existing_shift)
+            if (existing_shift):
+                print("Shift already exits")
+                pass
+                # serializer.update(existing_shift, serializer.validated_data)
+            else:
+                print("Creating new shift")
+                serializer.save(owner=self.request.user)
+
         else:
             print(serializer.errors)
 
 
-class NoteDelete(generics.DestroyAPIView):
-    serializer_class = NoteSerializer
+class ShiftDelete(generics.DestroyAPIView):
+    serializer_class = ShiftSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
-        return Note.objects.filter(author=user)
+        return Shift.objects.filter(owner=user)
 
 
 class CreateUserView(generics.CreateAPIView):

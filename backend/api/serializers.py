@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import Note
+from .models import Shift
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -14,8 +14,9 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
-class NoteSerializer(serializers.ModelSerializer):
+class ShiftSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Note
-        fields = ["id", "title", "content", "created_at", "author"]
-        extra_kwargs = {"author": {"read_only": True}}
+        model = Shift
+        fields = ["id", "week", "applied_shift", "actual_shift",
+                  "application_last_modified", "actual_last_modified", "owner"]
+        extra_kwargs = {"owner": {"read_only": True}}

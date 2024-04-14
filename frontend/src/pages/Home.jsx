@@ -1,53 +1,68 @@
 import { useState, useEffect } from "react";
 import api from "../api";
-import Note from "../components/Note";
+import ShiftSchedule from "../components/Shift";
 import "../styles/Home.css";
 
+function getCurrentWeek() {
+  const now = new Date();
+  const yearStart = new Date(now.getFullYear(), 0, 0);
+  const diff = now - yearStart;
+  const oneWeek = 1000 * 60 * 60 * 24 * 7;
+  const weekNumber = Math.floor(diff / oneWeek) + 1;
+  return "W" + weekNumber;
+}
+
+function getDefaultShift() {
+  return "000000000000000000000";
+}
+
 function Home() {
-  const [notes, setNotes] = useState([]);
-  const [content, setContent] = useState("");
-  const [title, setTitle] = useState("");
+  const [shift, setShifts] = useState([]);
+  const [appliedShift, setAppliedShift] = useState("");
+
+  let schedule = getDefaultShift();
 
   useEffect(() => {
-    getNotes();
+    getShift();
   }, []);
 
-  const getNotes = () => {
+  const getShift = () => {
     api
-      .get("/api/notes/")
+      .get("/api/shifts/")
       .then((res) => res.data)
       .then((data) => {
-        setNotes(data);
-        console.log(notes);
+        setShifts(data);
+        console.log(shift);
       })
       .catch((err) => alert(err));
+    shift.map((s) => {
+      schedule = s.applied_shift;
+    });
   };
 
-  const deleteNote = (id) => {
-    api
-      .delete(`/api/notes/delete/${id}`)
-      .then((res) => {
-        if (res.status === 204) {
-          alert("Note was delete");
-        } else {
-          alert("Failed to delete note!");
-        }
-        getNotes();
-      })
-      .catch((err) => alert(err));
-  };
-
-  const createNote = (e) => {
+  const createShift = (e) => {
     e.preventDefault();
+
+    const week = getCurrentWeek();
+    const actualShift = getDefaultShift();
+    const currDateTime = new Date();
+    const isoDateTime = currDateTime.toISOString();
+
     api
-      .post("/api/notes/", { content, title })
+      .post("/api/shifts/", {
+        week: week,
+        applied_shift: appliedShift,
+        actual_shift: actualShift,
+        application_last_modified: isoDateTime,
+        actual_last_modified: isoDateTime,
+      })
       .then((res) => {
         if (res.status === 201) {
-          alert("Note created");
+          alert("Shift created");
         } else {
-          alert("Failed to make a note");
+          alert("Failed to make a shift");
         }
-        getNotes();
+        getShift();
       })
       .catch((err) => alert(err));
   };
@@ -55,31 +70,19 @@ function Home() {
   return (
     <div>
       <div>
-        <h2>Notes</h2>
-        {notes.map((note) => (
-          <Note note={note} onDelete={deleteNote} key={note.id}></Note>
-        ))}
+        <h2>Shifts</h2>
+        <ShiftSchedule schedule={schedule} />
       </div>
-      <h2>Create a note</h2>
-      <form onSubmit={createNote}>
-        <label htmlFor="title">Title:</label>
-        <br />
-        <input
-          type="text"
-          id="title"
-          name="title"
-          required
-          onChange={(e) => setTitle(e.target.value)}
-          value={title}
-        />
-        <label htmlFor="content">Content:</label>
+      <h2>Create a shift</h2>
+      <form onSubmit={createShift}>
+        <label htmlFor="content">Applied schedule:</label>
         <br />
         <textarea
           id="content"
           name="content"
           required
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
+          value={appliedShift}
+          onChange={(e) => setAppliedShift(e.target.value)}
         ></textarea>
         <br />
         <input type="submit" value="Submit"></input>
