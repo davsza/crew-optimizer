@@ -15,19 +15,13 @@ class ShiftListCreate(generics.ListCreateAPIView):
         return Shift.objects.filter(owner=user)
 
     def perform_create(self, serializer):
-        if serializer.is_valid():
-            existing_shift = Shift.objects.filter(owner=self.request.user)
-            print(existing_shift)
-            if (existing_shift):
-                print("Shift already exits")
-                pass
-                # serializer.update(existing_shift, serializer.validated_data)
-            else:
-                print("Creating new shift")
-                serializer.save(owner=self.request.user)
-
+        existing_shift = Shift.objects.filter(owner=self.request.user).first()
+        if existing_shift:
+            print("Shift already exists")
+            serializer.update(existing_shift, serializer.validated_data)
         else:
-            print(serializer.errors)
+            print("Creating new shift")
+            serializer.save(owner=self.request.user)
 
 
 class ShiftDelete(generics.DestroyAPIView):

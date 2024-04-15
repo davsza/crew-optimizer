@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../api";
-import ShiftSchedule from "../components/Shift";
+import ShiftSchedule from "../components/ShiftSchedule";
 import "../styles/Home.css";
 
 function getCurrentWeek() {
@@ -20,25 +20,19 @@ function Home() {
   const [shift, setShifts] = useState([]);
   const [appliedShift, setAppliedShift] = useState("");
 
-  let schedule = getDefaultShift();
-
-  useEffect(() => {
-    getShift();
-  }, []);
-
   const getShift = () => {
     api
       .get("/api/shifts/")
       .then((res) => res.data)
       .then((data) => {
-        setShifts(data);
-        console.log(shift);
+        setShifts(data[0]);
       })
       .catch((err) => alert(err));
-    shift.map((s) => {
-      schedule = s.applied_shift;
-    });
   };
+
+  useEffect(() => {
+    getShift();
+  }, []);
 
   const createShift = (e) => {
     e.preventDefault();
@@ -58,9 +52,9 @@ function Home() {
       })
       .then((res) => {
         if (res.status === 201) {
-          alert("Shift created");
+          console.log("Shift created");
         } else {
-          alert("Failed to make a shift");
+          console.log("Failed to make a shift");
         }
         getShift();
       })
@@ -71,7 +65,11 @@ function Home() {
     <div>
       <div>
         <h2>Shifts</h2>
-        <ShiftSchedule schedule={schedule} />
+        {shift === undefined ? (
+          <ShiftSchedule schedule={getDefaultShift()} />
+        ) : (
+          <ShiftSchedule schedule={shift.applied_shift} />
+        )}
       </div>
       <h2>Create a shift</h2>
       <form onSubmit={createShift}>
