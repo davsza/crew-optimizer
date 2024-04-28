@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import api from "../api";
 import ShiftSchedule from "../components/ShiftSchedule";
+import Header from "../components/Header";
 import "../styles/Home.css";
+import { useNavigate } from "react-router-dom";
 
 function getCurrentWeek() {
   const now = new Date();
@@ -63,28 +65,33 @@ function Home() {
 
   return (
     <div>
-      <div>
-        <h2>Shifts</h2>
-        {shift === undefined ? (
-          <ShiftSchedule schedule={getDefaultShift()} />
-        ) : (
-          <ShiftSchedule schedule={shift.applied_shift} />
-        )}
+      <Header></Header>
+      <div className="container">
+        <div className="schedule-container">
+          <h2>Shifts</h2>
+          {shift === undefined ? (
+            <ShiftSchedule schedule={getDefaultShift()} />
+          ) : (
+            <ShiftSchedule schedule={shift.applied_shift} />
+          )}
+        </div>
+        <div className="chat-container">
+          <h2>Create a shift</h2>
+          <form onSubmit={createShift}>
+            <label htmlFor="content">Applied schedule:</label>
+            <br />
+            <textarea
+              id="content"
+              name="content"
+              required
+              value={appliedShift}
+              onChange={(e) => setAppliedShift(e.target.value)}
+            ></textarea>
+            <br />
+            <input type="submit" value="Submit"></input>
+          </form>
+        </div>
       </div>
-      <h2>Create a shift</h2>
-      <form onSubmit={createShift}>
-        <label htmlFor="content">Applied schedule:</label>
-        <br />
-        <textarea
-          id="content"
-          name="content"
-          required
-          value={appliedShift}
-          onChange={(e) => setAppliedShift(e.target.value)}
-        ></textarea>
-        <br />
-        <input type="submit" value="Submit"></input>
-      </form>
     </div>
   );
 }

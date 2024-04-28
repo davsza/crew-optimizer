@@ -12,6 +12,11 @@ function Form({ route, method }) {
   const navigate = useNavigate();
 
   const name = method === "login" ? "Login" : "Register";
+  const navigateTo = method === "login" ? "register" : "login";
+
+  const navigateToPage = () => {
+    navigate("/" + navigateTo);
+  };
 
   const handleSubmit = async (e) => {
     setLoading(true);
@@ -53,6 +58,9 @@ function Form({ route, method }) {
       {loading && <LoadingIndicator />}
       <button className="form-button" type="submit">
         {name}
+      </button>
+      <button className="form-button" onClick={navigateToPage}>
+        {(navigateTo.charAt(0).toUpperCase() + navigateTo.slice(1))}
       </button>
     </form>
   );
