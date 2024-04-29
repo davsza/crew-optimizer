@@ -3,7 +3,7 @@ import api from "../api";
 import ShiftSchedule from "../components/ShiftSchedule";
 import Header from "../components/Header";
 import "../styles/Home.css";
-import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 function getCurrentWeek() {
   const now = new Date();
@@ -21,6 +21,7 @@ function getDefaultShift() {
 function Home() {
   const [shift, setShifts] = useState([]);
   const [appliedShift, setAppliedShift] = useState("");
+  const [userGroup, setUserGroup] = useState("");
 
   const getShift = () => {
     api
@@ -32,8 +33,21 @@ function Home() {
       .catch((err) => alert(err));
   };
 
+  const fetchUserGroup = async () => {
+    console.log("Fetch")
+    try {
+      console.log("Try")
+      const response = await axios.get("/api/get-user-group");
+      setUserGroup(response.data.group);
+      console.log("response", response.data.group);
+    } catch (error) {
+      console.log("Error")
+    }
+  };
+
   useEffect(() => {
     getShift();
+    fetchUserGroup();
   }, []);
 
   const createShift = (e) => {
