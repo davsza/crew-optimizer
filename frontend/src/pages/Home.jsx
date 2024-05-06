@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import api from "../api";
-import ShiftSchedule from "../components/ShiftSchedule";
+import ShiftPanel from "../components/ShitPanel";
 import Header from "../components/Header";
 import "../styles/Home.css";
-import axios from "axios";
 
 function getCurrentWeek() {
   const now = new Date();
@@ -14,54 +13,56 @@ function getCurrentWeek() {
   return "W" + weekNumber;
 }
 
-function getDefaultShift() {
-  return "000000000000000000000";
-}
-
 function Home() {
-  const [shift, setShifts] = useState([]);
-  const [appliedShift, setAppliedShift] = useState("");
+  const [actualShift, setActualShifts] = useState([]);
+  const [appliedShift, setAppliedShift] = useState([]);
+  const [application, setApplication] = useState("");
   const [userGroup, setUserGroup] = useState("");
+  const [userName, setUserName] = useState("");
 
   const getShift = () => {
     api
       .get("/api/shifts/")
       .then((res) => res.data)
       .then((data) => {
-        setShifts(data[0]);
+        console.log(data);
+        setActualShifts(data[0]);
+        setAppliedShift(data[1]);
       })
       .catch((err) => alert(err));
   };
 
-  const fetchUserGroup = async () => {
-    console.log("Fetch")
-    try {
-      console.log("Try")
-      const response = await axios.get("/api/get-user-group");
-      setUserGroup(response.data.group);
-      console.log("response", response.data.group);
-    } catch (error) {
-      console.log("Error")
-    }
+  const fetchUserDate = () => {
+    api
+      .get("/api/get-user-data/")
+      .then((res) => res.data)
+      .then((data) => {
+        setUserGroup(data.group);
+        setUserName(data.username);
+      })
+      .catch((err) => alert(err));
   };
 
   useEffect(() => {
     getShift();
-    fetchUserGroup();
+    fetchUserDate();
   }, []);
 
   const createShift = (e) => {
     e.preventDefault();
 
     const week = getCurrentWeek();
-    const actualShift = getDefaultShift();
+    console.log(week);
+    const actualShift = "0".repeat(21);
     const currDateTime = new Date();
     const isoDateTime = currDateTime.toISOString();
+    const year = currDateTime.getFullYear();
 
     api
       .post("/api/shifts/", {
         week: week,
-        applied_shift: appliedShift,
+        year: year,
+        applied_shift: application,
         actual_shift: actualShift,
         application_last_modified: isoDateTime,
         actual_last_modified: isoDateTime,
@@ -79,27 +80,36 @@ function Home() {
 
   return (
     <div>
-      <Header></Header>
+      <Header userName={userName}></Header>
       <div className="container">
         <div className="schedule-container">
-          <h2>Shifts</h2>
-          {shift === undefined ? (
-            <ShiftSchedule schedule={getDefaultShift()} />
+          {userGroup !== "Supervisior" ? (
+            <>
+              <h2>Shifts</h2>
+              {actualShift === undefined ? (
+                <p>No shift</p>
+              ) : (
+                <ShiftPanel
+                  actualShift={actualShift}
+                  appliedShift={appliedShift}
+                />
+              )}
+            </>
           ) : (
-            <ShiftSchedule schedule={shift.applied_shift} />
+            <p>Supervisior</p>
           )}
         </div>
         <div className="chat-container">
           <h2>Create a shift</h2>
-          <form onSubmit={createShift}>
-            <label htmlFor="content">Applied schedule:</label>
+          <form className="chat-form" onSubmit={createShift}>
+            <label htmlFor="content">Application:</label>
             <br />
             <textarea
               id="content"
               name="content"
               required
-              value={appliedShift}
-              onChange={(e) => setAppliedShift(e.target.value)}
+              value={application}
+              onChange={(e) => setApplication(e.target.value)}
             ></textarea>
             <br />
             <input type="submit" value="Submit"></input>

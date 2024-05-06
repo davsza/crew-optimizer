@@ -2,7 +2,7 @@ import React from "react";
 import "../styles/Header.css";
 import { useNavigate } from "react-router-dom";
 
-const Header = () => {
+const Header = ({ userName }) => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -12,7 +12,7 @@ const Header = () => {
 
   return (
     <header className="header">
-      <div className="profile">Profile</div>
+      <div className="username">{userName}</div>
       <button className="logout" onClick={handleLogout}>
         Logout
       </button>

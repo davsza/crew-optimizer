@@ -2,36 +2,11 @@ div {
   font-family: Arial, sans-serif;
 }
 
-.notes-section {
-  margin-bottom: 2rem;
-}
-
-.notes-section h2 {
-  color: #333;
-  font-size: 24px;
-}
-
-.note {
-  background-color: #f9f9f9;
-  border-left: 5px solid #007bff;
-  margin: 10px 0;
-  padding: 10px 15px;
-  border-radius: 5px;
-}
-
-.chat-container {
-  display: flex;
-  flex-direction: column; /* Arrange children vertically */
-  align-items: center; /* Center children horizontally */
-}
-
 form {
   background-color: #fff;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  max-width: 500px;
-  width: 100%; /* Form fills all available space */
 }
 
 form h2 {
@@ -71,17 +46,19 @@ form input[type="submit"]:hover {
 
 .container {
   display: flex;
+  height: 50vh;
 }
 
-.box {
-  flex: 1;
-  padding: 10px;
-  border: 1px solid #ddd;
-}
-
-.chat-container, .schedule-container {
+.chat-container,
+.schedule-container {
   margin: 10px;
-  flex: 1;
-  width: 50%;
+  height: 90%;
 }
 
+.chat-container {
+  flex: 1;
+}
+
+.schedule-container {
+  flex: 2;
+}

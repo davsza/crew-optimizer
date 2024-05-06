@@ -11,7 +11,7 @@ function Form({ route, method }) {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const name = method === "login" ? "Login" : "Register";
+  const methodType = method === "login" ? "Login" : "Register";
   const navigateTo = method === "login" ? "register" : "login";
 
   const navigateToPage = () => {
@@ -40,7 +40,7 @@ function Form({ route, method }) {
 
   return (
     <form onSubmit={handleSubmit} className="form-container">
-      <h1>{name}</h1>
+      <h1>{methodType}</h1>
       <input
         className="form-input"
         type="text"
@@ -57,10 +57,10 @@ function Form({ route, method }) {
       />
       {loading && <LoadingIndicator />}
       <button className="form-button" type="submit">
-        {name}
+        {methodType}
       </button>
       <button className="form-button" onClick={navigateToPage}>
-        {(navigateTo.charAt(0).toUpperCase() + navigateTo.slice(1))}
+        {navigateTo.charAt(0).toUpperCase() + navigateTo.slice(1)}
       </button>
     </form>
   );
