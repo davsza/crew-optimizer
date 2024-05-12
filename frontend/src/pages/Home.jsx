@@ -2,32 +2,34 @@ import { useState, useEffect } from "react";
 import api from "../api";
 import ShiftPanel from "../components/ShitPanel";
 import Header from "../components/Header";
+import Dropdown from "../components/Dropdown";
 import "../styles/Home.css";
-
-function getCurrentWeek() {
-  const now = new Date();
-  const yearStart = new Date(now.getFullYear(), 0, 0);
-  const diff = now - yearStart;
-  const oneWeek = 1000 * 60 * 60 * 24 * 7;
-  const weekNumber = Math.floor(diff / oneWeek) + 1;
-  return "W" + weekNumber;
-}
+import { getCurrentWeek } from "../constants";
 
 function Home() {
   const [actualShift, setActualShifts] = useState([]);
   const [appliedShift, setAppliedShift] = useState([]);
+  const [selectedWeek, setSelectedWeek] = useState(getCurrentWeek(0));
   const [application, setApplication] = useState("");
   const [userGroup, setUserGroup] = useState("");
   const [userName, setUserName] = useState("");
 
-  const getShift = () => {
+  const getActualShift = (week) => {
     api
-      .get("/api/shifts/")
+      .get(`/api/shifts/${week}`)
       .then((res) => res.data)
       .then((data) => {
-        console.log(data);
         setActualShifts(data[0]);
-        setAppliedShift(data[1]);
+      })
+      .catch((err) => alert(err));
+  };
+
+  const getAppliedShift = (week) => {
+    api
+      .get(`/api/shifts/${week}`)
+      .then((res) => res.data)
+      .then((data) => {
+        setAppliedShift(data[0]);
       })
       .catch((err) => alert(err));
   };
@@ -44,15 +46,25 @@ function Home() {
   };
 
   useEffect(() => {
-    getShift();
+    const week = getCurrentWeek(0);
+    const appliedShiftWeek = week + 2;
+    getActualShift(week);
+    getAppliedShift(appliedShiftWeek);
     fetchUserDate();
   }, []);
+
+  useEffect(() => {
+    getActualShift(selectedWeek);
+  }, [selectedWeek]);
+
+  const handleSelectWeek = (week) => {
+    setSelectedWeek(week);
+  };
 
   const createShift = (e) => {
     e.preventDefault();
 
-    const week = getCurrentWeek();
-    console.log(week);
+    const week = getCurrentWeek(0);
     const actualShift = "0".repeat(21);
     const currDateTime = new Date();
     const isoDateTime = currDateTime.toISOString();
@@ -73,7 +85,7 @@ function Home() {
         } else {
           console.log("Failed to make a shift");
         }
-        getShift();
+        getActualShift();
       })
       .catch((err) => alert(err));
   };
@@ -86,6 +98,7 @@ function Home() {
           {userGroup !== "Supervisior" ? (
             <>
               <h2>Shifts</h2>
+              <Dropdown onSelectWeek={handleSelectWeek} />
               {actualShift === undefined ? (
                 <p>No shift</p>
               ) : (

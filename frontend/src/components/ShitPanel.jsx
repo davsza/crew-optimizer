@@ -5,8 +5,8 @@ import ShiftTable from "../components/ShiftTable";
 const ShiftPanel = ({ actualShift, appliedShift }) => {
   return (
     <div className="table-container">
-      <ShiftTable shift={appliedShift} actual={false}/>
       <ShiftTable shift={actualShift} actual={true}/>
+      <ShiftTable shift={appliedShift} actual={false}/>
     </div>
   );
 };

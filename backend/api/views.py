@@ -6,8 +6,26 @@ from .serializers import UserSerializer, ShiftSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import Shift
 from django.http import JsonResponse
-import datetime
-from django.db.models import Q
+
+
+class ShiftGivenWeekQuery(generics.ListAPIView):
+    serializer_class = ShiftSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        week = self.kwargs.get('week')
+        return Shift.objects.filter(owner=user, week=week)
+    
+
+class ShiftLastWeeksQuery(generics.ListAPIView):
+    serializer_class = ShiftSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        week = self.kwargs.get('week')
+        return Shift.objects.filter(owner=user, week__lte=week)
 
 
 class ShiftListCreate(generics.ListCreateAPIView):
@@ -16,10 +34,7 @@ class ShiftListCreate(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        current_date = datetime.datetime.now()
-        current_week = current_date.isocalendar()[1]
-        last_week = current_week - 1
-        return Shift.objects.filter(owner=user).filter(Q(week="W"+str(current_week)) | Q(week="W"+str(last_week)))
+        return Shift.objects.filter(owner=user)
 
     def perform_create(self, serializer):
         week_number = serializer.validated_data.get('week')

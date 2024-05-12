@@ -6,7 +6,7 @@ from constants import NUMBER_OF_SHIFTS
 
 
 class Shift(models.Model):
-    week = models.CharField(max_length=3)
+    week = models.IntegerField()
     year = models.IntegerField()
     applied_shift = models.CharField(max_length=NUMBER_OF_SHIFTS)
     actual_shift = models.CharField(max_length=NUMBER_OF_SHIFTS)
