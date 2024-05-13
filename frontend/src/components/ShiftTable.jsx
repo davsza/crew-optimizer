@@ -1,6 +1,6 @@
 import React from "react";
 import "../styles/ShiftTable.css";
-import { MONTHS, DAYS } from "../constants";
+import { MONTHS, DAYS, getStartDateOfWeek } from "../constants";
 
 const ShiftTable = ({ shift, actual }) => {
   const appliedShift = actual ? shift.actual_shift : shift.applied_shift;
@@ -23,15 +23,6 @@ const ShiftTable = ({ shift, actual }) => {
     return hours[index];
   };
 
-  function getStartDateOfWeek(year, weekNumber) {
-    const januaryFirst = new Date(year, 0, 1);
-    const firstDayOfYear = januaryFirst.getDay() || 7;
-    const daysToAdd = (weekNumber - 1) * 7 - (firstDayOfYear - 1);
-    const startDate = new Date(year, 0, 1 + daysToAdd);
-    startDate.setDate(startDate.getDate() - startDate.getDay() + 1);
-    return startDate;
-  }
-
   const startDate = getStartDateOfWeek(shift.year, shift.week);
   const startDay = startDate.getDate();
   const endDate = new Date(startDate.getTime());
@@ -40,7 +31,6 @@ const ShiftTable = ({ shift, actual }) => {
   return (
     <table className="schedule-table">
       <thead>
-        <tr>{actual ? "aasd" : "asd"}</tr>
         <tr>
           <th>
             {MONTHS[startDate.getMonth()]} {startDay} -{" "}

@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from "react";
 import api from "../api";
-import { getCurrentWeek } from "../constants";
+import {
+  getCurrentWeek,
+  getStartDateOfWeek,
+  getEndDateOfWeek,
+  formatDate,
+} from "../constants";
 import "../styles/Dropdown.css";
 
-const Dropdown = ({ onSelectWeek }) => {
+const Dropdown = ({ year, onSelectWeek }) => {
   const [options, setOptions] = useState([]);
   const [selectedOption, setSelectedOption] = useState("");
   const [shifts, setShifts] = useState([]);
@@ -39,11 +44,17 @@ const Dropdown = ({ onSelectWeek }) => {
   return (
     <select value={selectedOption} onChange={handleChange} className="dropdown">
       <option value="">Select a week</option>
-      {options.map((option) => (
-        <option key={option} value={option}>
-          {option}
-        </option>
-      ))}
+      {options.map((option) => {
+        const startDate = getStartDateOfWeek(year, option);
+        let endDate = getEndDateOfWeek(year, option);
+        return (
+          <React.Fragment key={option}>
+            <option value={option}>
+              {formatDate(startDate)} - {formatDate(endDate)}
+            </option>
+          </React.Fragment>
+        );
+      })}
     </select>
   );
 };

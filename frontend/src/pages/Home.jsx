@@ -4,7 +4,7 @@ import ShiftPanel from "../components/ShitPanel";
 import Header from "../components/Header";
 import Dropdown from "../components/Dropdown";
 import "../styles/Home.css";
-import { getCurrentWeek } from "../constants";
+import { getCurrentWeek, getCurrentYear } from "../constants";
 
 function Home() {
   const [actualShift, setActualShifts] = useState([]);
@@ -98,7 +98,10 @@ function Home() {
           {userGroup !== "Supervisior" ? (
             <>
               <h2>Shifts</h2>
-              <Dropdown onSelectWeek={handleSelectWeek} />
+              <Dropdown
+                year={getCurrentYear()}
+                onSelectWeek={handleSelectWeek}
+              />
               {actualShift === undefined ? (
                 <p>No shift</p>
               ) : (

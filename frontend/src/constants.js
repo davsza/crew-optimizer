@@ -26,14 +26,44 @@ export const DAYS = [
 
 export const getCurrentWeek = (additionalWeeks) => {
   const now = new Date();
-  const yearStart = new Date(now.getFullYear(), 0, 0);
-  const diff = now - yearStart;
-  const oneWeek = 1000 * 60 * 60 * 24 * 7;
-  let weekNumber = Math.floor(diff / oneWeek) + 1;
-  const currentDay = now.getDay();
-  if (currentDay <= 3) {
-    weekNumber -= 1;
-  } 
+  const yearStart = new Date(now.getFullYear(), 0, 1);
+  const oneDay = 1000 * 60 * 60 * 24;
+  const startDay = yearStart.getDay();
+  const daysToAdd = startDay > 1 ? 8 - startDay : 1 - startDay;
+  yearStart.setDate(yearStart.getDate() + daysToAdd);
+
+  const diffFromStart = now - yearStart;
+  let weekNumber = Math.floor(diffFromStart / (7 * oneDay)) + 1;
+
   weekNumber += additionalWeeks;
   return weekNumber;
+};
+
+export const getStartDateOfWeek = (year, weekNumber) => {
+  const januaryFirst = new Date(year, 0, 1);
+  const firstDayOfYear = januaryFirst.getDay() || 7;
+  const daysToAdd = (weekNumber - 1) * 7 - (firstDayOfYear - 1);
+  const startDate = new Date(year, 0, 1 + daysToAdd);
+  startDate.setDate(startDate.getDate() - startDate.getDay() + 1);
+  return startDate;
+};
+
+export const getEndDateOfWeek = (year, weekNumber) => {
+  const januaryFirst = new Date(year, 0, 1);
+  const firstDayOfYear = januaryFirst.getDay() || 7;
+  const daysToAdd = (weekNumber - 1) * 7 - (firstDayOfYear - 1);
+  const startDate = new Date(year, 0, 1 + daysToAdd);
+  startDate.setDate(startDate.getDate() - startDate.getDay() + 7);
+  return startDate;
+};
+
+export const getCurrentYear = () => {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  return currentYear;
+};
+
+export const formatDate = (date) => {
+  const options = { month: "short", day: "numeric" };
+  return date.toLocaleDateString("en-US", options);
 };
