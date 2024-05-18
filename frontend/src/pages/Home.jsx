@@ -97,7 +97,6 @@ function Home() {
         <div className="schedule-container">
           {userGroup !== "Supervisior" ? (
             <>
-              <h2>Shifts</h2>
               <Dropdown
                 year={getCurrentYear()}
                 onSelectWeek={handleSelectWeek}
@@ -116,7 +115,6 @@ function Home() {
           )}
         </div>
         <div className="chat-container">
-          <h2>Create a shift</h2>
           <form className="chat-form" onSubmit={createShift}>
             <label htmlFor="content">Application:</label>
             <br />

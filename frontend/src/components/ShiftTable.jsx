@@ -1,9 +1,16 @@
 import React from "react";
 import "../styles/ShiftTable.css";
-import { MONTHS, DAYS, getStartDateOfWeek } from "../constants";
+import {
+  MONTHS,
+  getStartDateOfWeek,
+  formatDate,
+  datePlusDays,
+} from "../constants";
 
-const ShiftTable = ({ shift, actual }) => {
-  const appliedShift = actual ? shift.actual_shift : shift.applied_shift;
+const ShiftTable = ({ shift, isAcceptedShift }) => {
+  const appliedShift = isAcceptedShift
+    ? shift.actual_shift
+    : shift.applied_shift;
 
   if (
     !appliedShift ||
@@ -18,7 +25,7 @@ const ShiftTable = ({ shift, actual }) => {
     return hours[index];
   };
 
-  const getFinishinggHours = (index) => {
+  const getFinishingHours = (index) => {
     const hours = [14, 18, 22];
     return hours[index];
   };
@@ -36,33 +43,19 @@ const ShiftTable = ({ shift, actual }) => {
             {MONTHS[startDate.getMonth()]} {startDay} -{" "}
             {MONTHS[endDate.getMonth()]} {endDay}
           </th>
-          <th>Working hours</th>
         </tr>
       </thead>
       <tbody>
         {[0, 1, 2, 3, 4, 5, 6].map((day) => {
-          const index = appliedShift
-            .substring(day * 3, day * 3 + 3)
-            .indexOf("1");
-          const from = getStartingHours(index);
-          const to = getFinishinggHours(index);
+          const shifts = appliedShift.substring(day * 3, day * 3 + 3).split("");
+          const hasShift = shifts.includes("1");
+
           return (
             <tr key={day}>
-              <td>{DAYS[day]}</td>
               <td key={shift} className="schedule-cell">
+                <div>{formatDate(datePlusDays(startDate, day))}</div>
                 <div className="outer">
-                  {index !== -1 ? (
-                    <div
-                      className="inner"
-                      style={{
-                        left: `${(from / 24) * 100}%`,
-                        width: `${((to - from) / 24) * 100}%`,
-                        backgroundColor: "#007bff",
-                      }}
-                    >
-                      {from} - {to}
-                    </div>
-                  ) : (
+                  {!hasShift ? (
                     <div
                       className="inner"
                       style={{
@@ -76,6 +69,24 @@ const ShiftTable = ({ shift, actual }) => {
                     >
                       Day off
                     </div>
+                  ) : (
+                    shifts.map((shift, index) => {
+                      const from = getStartingHours(index);
+                      const to = getFinishingHours(index);
+                      const style = {
+                        color: shift === "1" ? "#ffffff" : "#007bff",
+                        backgroundColor:
+                          shift === "1" ? "#007bff" : "transparent",
+                        border: shift !== "1" ? "1px solid #007bff" : "none",
+                        left: `${(from / 24) * 100}%`,
+                        width: `${((to - from) / 24) * 100}%`,
+                      };
+                      return (
+                        <div key={index} className="inner" style={style}>
+                          {from} - {to}
+                        </div>
+                      );
+                    })
                   )}
                 </div>
               </td>
