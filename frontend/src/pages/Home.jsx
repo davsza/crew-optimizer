@@ -7,19 +7,27 @@ import "../styles/Home.css";
 import { getCurrentWeek, getCurrentYear } from "../constants";
 
 function Home() {
-  const [actualShift, setActualShifts] = useState([]);
+  const week = getCurrentWeek(0);
+  const appliedShiftWeek = getCurrentWeek(2);
+
+  const year = getCurrentYear();
+
+  const [finalShift, setFinalShift] = useState([]);
   const [appliedShift, setAppliedShift] = useState([]);
-  const [selectedWeek, setSelectedWeek] = useState(getCurrentWeek(0));
+  const [selectedWeekForFinalShifts, setSelectedWeekForFinalShifts] =
+    useState(week);
+  const [selectedWeekForAppliedShifts, setSelectedWeekForAppliedShifts] =
+    useState(appliedShiftWeek);
   const [application, setApplication] = useState("");
   const [userGroup, setUserGroup] = useState("");
   const [userName, setUserName] = useState("");
 
-  const getActualShift = (week) => {
+  const getFinalShift = (week) => {
     api
       .get(`/api/shifts/${week}`)
       .then((res) => res.data)
       .then((data) => {
-        setActualShifts(data[0]);
+        setFinalShift(data[0]);
       })
       .catch((err) => alert(err));
   };
@@ -46,25 +54,31 @@ function Home() {
   };
 
   useEffect(() => {
-    const week = getCurrentWeek(0);
-    const appliedShiftWeek = week + 2;
-    getActualShift(week);
+    getFinalShift(week);
     getAppliedShift(appliedShiftWeek);
     fetchUserDate();
   }, []);
 
   useEffect(() => {
-    getActualShift(selectedWeek);
-  }, [selectedWeek]);
+    getFinalShift(selectedWeekForFinalShifts);
+  }, [selectedWeekForFinalShifts]);
 
-  const handleSelectWeek = (week) => {
-    setSelectedWeek(week);
+  useEffect(() => {
+    getAppliedShift(selectedWeekForAppliedShifts);
+  }, [selectedWeekForAppliedShifts]);
+
+  const handleSelectWeekForFinalShifts = (week) => {
+    setSelectedWeekForFinalShifts(week);
   };
 
-  const createShift = (e) => {
+  const handleSelectWeekForAppliedShifts = (week) => {
+    setSelectedWeekForAppliedShifts(week);
+  };
+
+  const createAppliedShift = (e) => {
     e.preventDefault();
 
-    const week = getCurrentWeek(0);
+    const week = getCurrentWeek(2);
     const actualShift = "0".repeat(21);
     const currDateTime = new Date();
     const isoDateTime = currDateTime.toISOString();
@@ -85,7 +99,7 @@ function Home() {
         } else {
           console.log("Failed to make a shift");
         }
-        getActualShift();
+        getAppliedShift(appliedShiftWeek);
       })
       .catch((err) => alert(err));
   };
@@ -95,17 +109,23 @@ function Home() {
       <Header userName={userName}></Header>
       <div className="container">
         <div className="schedule-container">
-          {userGroup !== "Supervisior" ? (
+          {userGroup !== "Supervisor" ? (
             <>
               <Dropdown
-                year={getCurrentYear()}
-                onSelectWeek={handleSelectWeek}
+                year={year}
+                finalShifts={true}
+                onSelectWeek={handleSelectWeekForFinalShifts}
               />
-              {actualShift === undefined ? (
+              <Dropdown
+                year={year}
+                finalShifts={false}
+                onSelectWeek={handleSelectWeekForAppliedShifts}
+              />
+              {finalShift === undefined ? (
                 <p>No shift</p>
               ) : (
                 <ShiftPanel
-                  actualShift={actualShift}
+                  actualShift={finalShift}
                   appliedShift={appliedShift}
                 />
               )}
@@ -115,7 +135,7 @@ function Home() {
           )}
         </div>
         <div className="chat-container">
-          <form className="chat-form" onSubmit={createShift}>
+          <form className="chat-form" onSubmit={createAppliedShift}>
             <label htmlFor="content">Application:</label>
             <br />
             <textarea

@@ -67,7 +67,7 @@ const ShiftTable = ({ shift, isAcceptedShift }) => {
                         backgroundColor: "red",
                       }}
                     >
-                      Day off
+                      {isAcceptedShift ? "Day off" : "No applied shifts"}
                     </div>
                   ) : (
                     shifts.map((shift, index) => {

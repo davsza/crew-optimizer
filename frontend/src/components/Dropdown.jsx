@@ -8,7 +8,7 @@ import {
 } from "../constants";
 import "../styles/Dropdown.css";
 
-const Dropdown = ({ year, onSelectWeek }) => {
+const Dropdown = ({ year, finalShifts, onSelectWeek }) => {
   const [options, setOptions] = useState([]);
   const [selectedOption, setSelectedOption] = useState("");
   const [shifts, setShifts] = useState([]);
@@ -25,9 +25,15 @@ const Dropdown = ({ year, onSelectWeek }) => {
 
   useEffect(() => {
     const currWeek = getCurrentWeek(0);
-    const nextWeek = currWeek + 1;
-    fetchShifts(nextWeek);
-    setSelectedOption(currWeek);
+    const nextWeek = getCurrentWeek(1);
+    const appliableWeek = getCurrentWeek(2);
+    if (finalShifts) {
+      fetchShifts(nextWeek);
+      setSelectedOption(currWeek);
+    } else {
+      fetchShifts(appliableWeek);
+      setSelectedOption(appliableWeek);
+    }
   }, []);
 
   useEffect(() => {
