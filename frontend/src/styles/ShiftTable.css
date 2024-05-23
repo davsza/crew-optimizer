@@ -1,7 +1,7 @@
 .schedule-table {
   border-collapse: collapse;
   width: 90%;
-  margin: 10px;
+  margin: 10px auto;
 }
 
 .schedule-table th,
@@ -9,6 +9,7 @@
   padding: 12px;
   text-align: center;
   border: 1px solid #e0e0e0;
+  vertical-align: middle;
 }
 
 .schedule-table th {
@@ -21,35 +22,23 @@
 }
 
 .schedule-cell {
-  height: 90%;
-  width: 50%;
+  height: auto;
 }
 
-.outer {
-  position: relative;
-  width: 100%;
-  height: 60px;
-  background-color: #e5e5e5;
-  text-align: center;
-  justify-content: center;
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  padding-top: 5px;
-  padding-bottom: 5px;
-}
-
-.inner {
-  color: #ffffff;
-  border-radius: 10px;
-  text-align: center;
-  font-size: 12px;
+.vertical-text {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  margin-right: 10px;
   font-weight: bold;
+}
+
+.flex-container {
   display: flex;
   align-items: center;
-  justify-content: center;
-  height: 17px;
-  margin-top: 1.5px;
-  margin-bottom: 1.5px;
-  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.shift-display {
+  flex: 1;
 }

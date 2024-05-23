@@ -1,0 +1,12 @@
+.table-container {
+  justify-content: center;
+  display: flex;
+  overflow-y: auto;
+  height: 100%;
+  width: 100%;
+}
+
+.shift-table {
+  width: 100%;
+  table-layout: fixed;
+}

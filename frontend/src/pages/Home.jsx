@@ -3,6 +3,8 @@ import api from "../api";
 import ShiftPanel from "../components/ShitPanel";
 import Header from "../components/Header";
 import Dropdown from "../components/Dropdown";
+import ModeDropdown from "../components/ModeDropdown";
+import AdminShiftTable from "../components/AdminShiftTable";
 import "../styles/Home.css";
 import { getCurrentWeek, getCurrentYear } from "../constants";
 
@@ -14,6 +16,8 @@ function Home() {
 
   const [finalShift, setFinalShift] = useState([]);
   const [appliedShift, setAppliedShift] = useState([]);
+  const [allShifts, setAllShifts] = useState([]);
+  const [selectedOption, setSelectedOption] = useState("true");
   const [selectedWeekForFinalShifts, setSelectedWeekForFinalShifts] =
     useState(week);
   const [selectedWeekForAppliedShifts, setSelectedWeekForAppliedShifts] =
@@ -42,6 +46,16 @@ function Home() {
       .catch((err) => alert(err));
   };
 
+  const getAllShifts = (week) => {
+    api
+      .get(`/api/get-shifts-admin/${week}`)
+      .then((res) => res.data)
+      .then((data) => {
+        setAllShifts(data);
+      })
+      .catch((err) => alert(err));
+  };
+
   const fetchUserDate = () => {
     api
       .get("/api/get-user-data/")
@@ -56,6 +70,7 @@ function Home() {
   useEffect(() => {
     getFinalShift(week);
     getAppliedShift(appliedShiftWeek);
+    getAllShifts(week);
     fetchUserDate();
   }, []);
 
@@ -65,7 +80,8 @@ function Home() {
 
   useEffect(() => {
     getAppliedShift(selectedWeekForAppliedShifts);
-  }, [selectedWeekForAppliedShifts]);
+    getAllShifts(selectedWeekForAppliedShifts);
+  }, [selectedWeekForAppliedShifts, selectedOption]);
 
   const handleSelectWeekForFinalShifts = (week) => {
     setSelectedWeekForFinalShifts(week);
@@ -73,6 +89,10 @@ function Home() {
 
   const handleSelectWeekForAppliedShifts = (week) => {
     setSelectedWeekForAppliedShifts(week);
+  };
+
+  const handleDropdownChange = (value) => {
+    setSelectedOption(value);
   };
 
   const createAppliedShift = (e) => {
@@ -131,7 +151,18 @@ function Home() {
               )}
             </>
           ) : (
-            <p>Supervisior</p>
+            <>
+              <ModeDropdown onChange={handleDropdownChange} />
+              <Dropdown
+                year={year}
+                finalShifts={false}
+                onSelectWeek={handleSelectWeekForAppliedShifts}
+              />
+              <AdminShiftTable
+                shiftsData={allShifts}
+                finalShift={selectedOption}
+              ></AdminShiftTable>
+            </>
           )}
         </div>
         <div className="chat-container">

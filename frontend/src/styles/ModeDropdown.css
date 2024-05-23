@@ -1,0 +1,12 @@
+.modedropdown {
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 12px;
+  border: 2px solid #007bff;
+  background-color: #ffffff;
+  color: #007bff;
+  width: 200px;
+  outline: none;
+  margin: 10px;
+  text-align: center;
+}

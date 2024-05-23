@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from rest_framework import generics
 from rest_framework.views import APIView
 from .serializers import UserSerializer, ShiftSerializer
@@ -16,7 +16,17 @@ class ShiftGivenWeekQuery(generics.ListAPIView):
         user = self.request.user
         week = self.kwargs.get('week')
         return Shift.objects.filter(owner=user, week=week)
-    
+
+
+class ShiftGivenWeekQueryAdmin(generics.ListAPIView):
+    serializer_class = ShiftSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        week = self.kwargs.get('week')
+        supervisor_group = Group.objects.get(name='Supervisor')
+        return Shift.objects.filter(week=week).exclude(owner__groups=supervisor_group)
+
 
 class ShiftLastWeeksQuery(generics.ListAPIView):
     serializer_class = ShiftSerializer
@@ -74,3 +84,15 @@ class UserDataView(APIView):
             return JsonResponse({'username': user.username, 'group': group_name})
         else:
             return JsonResponse({'error': 'User is not authenticated'}, status=401)
+
+
+def get_user_details(request):
+    try:
+        supervisor_group = Group.objects.get(name='Supervisor')
+        users = User.objects.exclude(
+            groups=supervisor_group).values('id', 'username')
+    except Group.DoesNotExist:
+        users = User.objects.all().values('id', 'username')
+
+    user_dict = {user['id']: user['username'] for user in users}
+    return JsonResponse(user_dict)

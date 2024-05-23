@@ -73,3 +73,13 @@ export const datePlusDays = (date, days) => {
   newDate.setDate(newDate.getDate() + days);
   return newDate;
 };
+
+export const getStartingHours = (index) => {
+  const hours = [6, 10, 14];
+  return hours[index];
+};
+
+export const getFinishingHours = (index) => {
+  const hours = [14, 18, 22];
+  return hours[index];
+};

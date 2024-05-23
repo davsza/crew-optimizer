@@ -46,7 +46,7 @@ form input[type="submit"]:hover {
 
 .container {
   display: flex;
-  height: 50vh;
+  height: 90vh;
 }
 
 .chat-container,
