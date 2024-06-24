@@ -45,7 +45,7 @@ const ShiftTable = ({ shift, isAcceptedShift }) => {
           const currDay = new Date();
           let additionClass = false;
 
-          if (displayDate.getDate() == currDay.getDate()) {
+          if (displayDate.setHours(0, 0, 0, 0) == currDay.setHours(0, 0, 0, 0)) {
             additionClass = true;
           }
 

@@ -17,7 +17,7 @@ const ModeDropdown = ({ onChange }) => {
       className="modedropdown"
     >
       <option value="true">True</option>
-      <option value="false">False</option>
+      <option value="">False</option>
     </select>
   );
 };

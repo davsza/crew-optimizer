@@ -92,7 +92,9 @@ function Home() {
   };
 
   const handleDropdownChange = (value) => {
-    setSelectedOption(value);
+    const option = Boolean(value);
+    console.log(option)
+    setSelectedOption(option);
   };
 
   const createAppliedShift = (e) => {
@@ -161,7 +163,7 @@ function Home() {
               <AdminShiftTable
                 shiftsData={allShifts}
                 finalShift={selectedOption}
-              ></AdminShiftTable>
+              />
             </>
           )}
         </div>
