@@ -7,13 +7,13 @@ solver = pywraplp.Solver.CreateSolver('SCIP')
 # Sets
 WORKERS = ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7',
            'W8', 'W9', 'W10', 'W11', 'W12', 'W13', 'W14', 'W15']
-SHIFTS = range(1, 43) # 1-42
-SHIFTS1 = range(1, 22) # 1-21
-SHIFTS2 = range(22, 43) # 22-42
-DAYS = range(1, 15) # 1-14
-DAYS1 = range(1, 8) # 1-7
-DAYS2 = range(8, 15) # 8-14
-NIGHTS = range(1, 14) # 1-13
+SHIFTS = range(1, 43)  # 1-42
+SHIFTS1 = range(1, 22)  # 1-21
+SHIFTS2 = range(22, 43)  # 22-42
+DAYS = range(1, 15)  # 1-14
+DAYS1 = range(1, 8)  # 1-7
+DAYS2 = range(8, 15)  # 8-14
+NIGHTS = range(1, 14)  # 1-13
 
 # Parameters
 min_workers = {
@@ -285,7 +285,7 @@ for w in WORKERS:
 for w in WORKERS:
     for d in DAYS2:
         solver.Add(offDays[w, d] == (1 - workDays[w, d] - reserve[w, d]))
-        
+
 # TODO: after 6 weeks there has to be a day off (if sum 1..6 workDays >= 6 then next offDay)
 # TODO: there has to be a 2 long day off in a 2 week period (sum off[i] * off[i + 1] >= 1)
 # TODO: after a reserve there has to be a day off (if res[i] = 1 then off[i + 1] = 1)
@@ -295,22 +295,44 @@ for w in WORKERS:
 # Solve the model
 status = solver.Solve()
 
+days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+
+def nl():
+    print()
+
+
+def space(times):
+    print(' ' * times, end='')
+
+
 if status == pywraplp.Solver.OPTIMAL:
     print("SHIFTS")
+    space(7)
+    for day in 2 * days:
+        print(day, '   ', end='')
+    nl()
     for w in WORKERS:
         print(f"{' ' if len(w) < 3 else ''}{w}: ", end=' ')
         for s in SHIFTS:
             print(int(schedule[w, s].solution_value()), end=' ')
-            if s == 21:
-                print('', end = ' ')
-        print()
-
+            if s % 3 == 0:
+                space(1)
+        nl()
+    nl()
+    space(6)
+    for day in 2 * days:
+        print(day[0], end=' ')
+        if day == "Sun":
+            space(1)
+    print()
     for w in WORKERS:
         print(f"{' ' if len(w) < 3 else ''}{w}: ", end=' ')
         for d in DAYS:
-            print('1' if int(workDays[w, d].solution_value()) == 1 else '0' if int(offDays[w, d].solution_value()) == 1 else '2', end=' ')
+            print('W' if int(workDays[w, d].solution_value()) == 1 else 'O' if int(
+                offDays[w, d].solution_value()) == 1 else 'R', end=' ')
             if d == 7:
-                print('', end = ' ')
-        print()
+                space(1)
+        nl()
 else:
     print('No solution found.')
