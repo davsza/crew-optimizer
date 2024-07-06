@@ -17,6 +17,6 @@ class UserSerializer(serializers.ModelSerializer):
 class ShiftSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shift
-        fields = ["id", "week", "year", "applied_shift", "actual_shift",
-                  "application_last_modified", "actual_last_modified", "owner"]
+        fields = ["id", "week", "year", "applied_shift", "actual_shift", "work_days", "off_days", "reserve_days",
+                  "application_last_modified", "actual_last_modified", "reserve_last_modified", "owner"]
         extra_kwargs = {"owner": {"read_only": True}}

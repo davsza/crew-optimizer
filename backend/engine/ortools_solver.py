@@ -1,146 +1,316 @@
 from ortools.linear_solver import pywraplp
+import random
+
+# Create the solver
+solver = pywraplp.Solver.CreateSolver('SCIP')
+
+# Sets
+WORKERS = ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7',
+           'W8', 'W9', 'W10', 'W11', 'W12', 'W13', 'W14', 'W15']
+SHIFTS = range(1, 43) # 1-42
+SHIFTS1 = range(1, 22) # 1-21
+SHIFTS2 = range(22, 43) # 22-42
+DAYS = range(1, 15) # 1-14
+DAYS1 = range(1, 8) # 1-7
+DAYS2 = range(8, 15) # 8-14
+NIGHTS = range(1, 14) # 1-13
+
+# Parameters
+min_workers = {
+    22: 2, 23: 4, 24: 2, 25: 2, 26: 4, 27: 2, 28: 2, 29: 4, 30: 2, 31: 2,
+    32: 4, 33: 2, 34: 2, 35: 4, 36: 2, 37: 1, 38: 2, 39: 1, 40: 1, 41: 2, 42: 1
+}
+
+# param application :
+# 	  22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 :=
+# W1   1  0  1  1  0  1  0  0  0  0  0  1  0  0  0  0  1  0  1  1  0
+# W2   0  1  1  0  1  1  1  1  0  0  0  0  0  1  0  0  0  1  0  1  1
+# W3   0  0  0  0  0  0  1  1  1  1  1  1  1  1  1  1  0  1  1  0  1
+# W4   1  0  1  1  0  1  0  1  1  1  0  0  1  0  0  1  1  0  1  1  1
+# W5   0  1  1  1  1  1  1  0  1  0  0  1  0  1  1  0  1  1  0  1  0
+# W6   1  1  1  1  1  1  1  0  1  0  1  1  1  1  1  0  1  0  1  1  0
+# W7   0  0  1  0  0  0  0  1  0  0  1  0  0  1  1  1  1  1  1  0  1
+# W8   1  0  1  1  0  1  0  0  0  0  1  1  0  1  0  1  1  1  1  1  0
+# W9   1  0  0  1  1  0  1  0  1  1  1  0  0  1  1  0  1  1  0  1  0
+# W10  1  0  1  1  0  1  1  1  0  1  1  1  0  0  1  0  0  0  1  1  0
+# W11  0  0  1  0  0  1  1  0  1  1  1  0  0  0  1  1  1  0  1  1  1
+# W12  0  0  0  1  1  0  0  0  1  1  1  0  0  0  0  0  0  0  1  0  0
+# W13  1  0  1  1  0  0  1  0  0  0  1  1  0  0  1  1  1  0  1  1  1
+# W14  0  1  0  1  1  0  0  0  1  1  1  1  1  1  0  0  0  1  1  0  1
+# W15  1  1  0  1  1  1  0  1  1  0  1  1  1  0  0  0  0  1  0  0  1;
+
+application = {
+    'W1': {22: 1, 23: 0, 24: 1, 25: 1, 26: 0, 27: 1, 28: 0, 29: 0, 30: 0, 31: 0, 32: 0, 33: 1, 34: 0, 35: 0, 36: 0, 37: 0, 38: 1, 39: 0, 40: 1, 41: 1, 42: 0},
+    'W2': {22: 0, 23: 1, 24: 1, 25: 0, 26: 1, 27: 1, 28: 1, 29: 1, 30: 0, 31: 0, 32: 0, 33: 0, 34: 0, 35: 1, 36: 0, 37: 0, 38: 0, 39: 1, 40: 0, 41: 1, 42: 1},
+    'W3': {22: 0, 23: 0, 24: 0, 25: 0, 26: 0, 27: 0, 28: 1, 29: 1, 30: 1, 31: 1, 32: 1, 33: 1, 34: 1, 35: 1, 36: 1, 37: 1, 38: 0, 39: 1, 40: 1, 41: 0, 42: 1},
+    'W4': {22: 1, 23: 0, 24: 1, 25: 1, 26: 0, 27: 1, 28: 0, 29: 1, 30: 1, 31: 1, 32: 0, 33: 0, 34: 1, 35: 0, 36: 0, 37: 1, 38: 1, 39: 0, 40: 1, 41: 1, 42: 1},
+    'W5': {22: 0, 23: 1, 24: 1, 25: 1, 26: 1, 27: 1, 28: 1, 29: 0, 30: 1, 31: 0, 32: 0, 33: 1, 34: 0, 35: 1, 36: 1, 37: 0, 38: 1, 39: 1, 40: 0, 41: 1, 42: 0},
+    'W6': {22: 1, 23: 1, 24: 1, 25: 1, 26: 1, 27: 1, 28: 1, 29: 0, 30: 1, 31: 0, 32: 1, 33: 1, 34: 1, 35: 1, 36: 1, 37: 0, 38: 1, 39: 0, 40: 1, 41: 1, 42: 0},
+    'W7': {22: 0, 23: 0, 24: 1, 25: 0, 26: 0, 27: 0, 28: 0, 29: 1, 30: 0, 31: 0, 32: 1, 33: 0, 34: 0, 35: 1, 36: 1, 37: 1, 38: 1, 39: 1, 40: 0, 41: 1, 42: 1},
+    'W8': {22: 1, 23: 0, 24: 1, 25: 1, 26: 0, 27: 1, 28: 0, 29: 0, 30: 0, 31: 0, 32: 1, 33: 1, 34: 0, 35: 1, 36: 0, 37: 1, 38: 1, 39: 1, 40: 1, 41: 1, 42: 0},
+    'W9': {22: 1, 23: 0, 24: 0, 25: 1, 26: 1, 27: 0, 28: 1, 29: 0, 30: 1, 31: 1, 32: 1, 33: 0, 34: 0, 35: 1, 36: 1, 37: 0, 38: 1, 39: 1, 40: 0, 41: 1, 42: 0},
+    'W10': {22: 1, 23: 0, 24: 1, 25: 1, 26: 0, 27: 1, 28: 1, 29: 1, 30: 0, 31: 1, 32: 1, 33: 1, 34: 0, 35: 0, 36: 1, 37: 0, 38: 0, 39: 0, 40: 1, 41: 1, 42: 0},
+    'W11': {22: 0, 23: 0, 24: 1, 25: 0, 26: 0, 27: 1, 28: 1, 29: 0, 30: 1, 31: 1, 32: 1, 33: 0, 34: 0, 35: 0, 36: 1, 37: 1, 38: 1, 39: 0, 40: 1, 41: 1, 42: 1},
+    'W12': {22: 0, 23: 0, 24: 0, 25: 1, 26: 1, 27: 0, 28: 0, 29: 0, 30: 1, 31: 1, 32: 1, 33: 0, 34: 0, 35: 0, 36: 0, 37: 0, 38: 0, 39: 0, 40: 1, 41: 0, 42: 0},
+    'W13': {22: 1, 23: 0, 24: 1, 25: 1, 26: 0, 27: 0, 28: 1, 29: 0, 30: 0, 31: 0, 32: 1, 33: 1, 34: 0, 35: 0, 36: 1, 37: 1, 38: 1, 39: 0, 40: 1, 41: 1, 42: 1},
+    'W14': {22: 0, 23: 1, 24: 0, 25: 1, 26: 1, 27: 0, 28: 0, 29: 0, 30: 1, 31: 1, 32: 1, 33: 1, 34: 1, 35: 1, 36: 0, 37: 0, 38: 0, 39: 1, 40: 1, 41: 0, 42: 1},
+    'W15': {22: 1, 23: 1, 24: 0, 25: 1, 26: 1, 27: 1, 28: 0, 29: 1, 30: 1, 31: 0, 32: 1, 33: 1, 34: 1, 35: 0, 36: 0, 37: 0, 38: 1, 39: 0, 40: 0, 41: 1, 42: 1}
+}
+
+newApplication = {}
+for w in WORKERS:
+    w_application = {}
+    for i in range(22, 43):
+        w_application[i] = random.randint(0, 1)
+    newApplication[w] = w_application
+# print(newApplication)
+
+# param fixShift :
+#      1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 :=
+# W1   0  0  0  0  0  1  0  0  0  0  0  1  0  0  0  0  1  0  1  0  0
+# W2   0  1  0  0  1  0  0  1  0  0  0  0  0  0  0  0  0  1  0  0  0
+# W3   0  0  0  0  0  0  0  1  0  0  0  1  0  0  0  1  0  0  0  0  1
+# W4   0  0  0  1  0  0  0  1  0  1  0  0  1  0  0  0  0  0  0  0  0
+# W5   0  0  0  0  1  0  0  0  1  0  0  0  0  0  0  0  1  0  0  1  0
+# W6   0  1  0  0  1  0  0  0  0  0  0  0  0  1  0  0  0  0  0  1  0
+# W7   0  0  0  0  0  0  0  1  0  0  0  0  0  0  1  0  0  1  0  0  1
+# W8   1  0  0  0  0  0  0  0  0  0  1  0  0  1  0  0  0  0  0  1  0
+# W9   0  0  0  1  0  0  1  0  0  0  0  0  0  1  0  0  1  0  0  0  0
+# W10  1  0  0  0  0  0  0  0  0  1  0  0  0  0  1  0  0  0  0  1  0
+# W11  0  0  1  0  0  0  1  0  0  0  1  0  0  0  0  0  1  0  0  0  0
+# W12  0  0  0  0  1  0  0  0  1  0  0  0  0  0  0  1  0  0  1  0  0
+# W13  0  0  1  0  0  0  0  0  0  0  1  0  0  0  0  0  1  0  0  1  0
+# W14  0  1  0  0  0  0  0  0  0  0  1  0  0  1  0  0  0  1  0  0  0
+# W15  0  1  0  0  0  1  0  0  0  0  1  0  1  0  0  0  0  0  0  0  0;
+
+fixShift = {
+    'W1': {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 1, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 1, 13: 0, 14: 0, 15: 0, 16: 0, 17: 1, 18: 0, 19: 1, 20: 0, 21: 0},
+    'W2': {1: 0, 2: 1, 3: 0, 4: 0, 5: 1, 6: 0, 7: 0, 8: 1, 9: 0, 10: 0, 11: 0, 12: 0, 13: 0, 14: 0, 15: 0, 16: 0, 17: 0, 18: 1, 19: 0, 20: 0, 21: 0},
+    'W3': {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 1, 9: 0, 10: 0, 11: 0, 12: 1, 13: 0, 14: 0, 15: 0, 16: 1, 17: 0, 18: 0, 19: 0, 20: 0, 21: 1},
+    'W4': {1: 0, 2: 0, 3: 0, 4: 1, 5: 0, 6: 0, 7: 0, 8: 1, 9: 0, 10: 1, 11: 0, 12: 0, 13: 1, 14: 0, 15: 0, 16: 0, 17: 0, 18: 0, 19: 0, 20: 0, 21: 0},
+    'W5': {1: 0, 2: 0, 3: 0, 4: 0, 5: 1, 6: 0, 7: 0, 8: 0, 9: 1, 10: 0, 11: 0, 12: 0, 13: 0, 14: 0, 15: 0, 16: 0, 17: 1, 18: 0, 19: 0, 20: 1, 21: 0},
+    'W6': {1: 0, 2: 1, 3: 0, 4: 0, 5: 1, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0, 13: 0, 14: 1, 15: 0, 16: 0, 17: 0, 18: 0, 19: 0, 20: 1, 21: 0},
+    'W7': {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 1, 9: 0, 10: 0, 11: 0, 12: 0, 13: 0, 14: 0, 15: 1, 16: 0, 17: 0, 18: 1, 19: 0, 20: 0, 21: 1},
+    'W8': {1: 1, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 1, 12: 0, 13: 0, 14: 1, 15: 0, 16: 0, 17: 0, 18: 0, 19: 0, 20: 1, 21: 0},
+    'W9': {1: 0, 2: 0, 3: 0, 4: 1, 5: 0, 6: 0, 7: 1, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0, 13: 0, 14: 1, 15: 0, 16: 0, 17: 1, 18: 0, 19: 0, 20: 0, 21: 0},
+    'W10': {1: 1, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 1, 11: 0, 12: 0, 13: 0, 14: 0, 15: 1, 16: 0, 17: 0, 18: 0, 19: 0, 20: 1, 21: 0},
+    'W11': {1: 0, 2: 0, 3: 1, 4: 0, 5: 0, 6: 0, 7: 1, 8: 0, 9: 0, 10: 0, 11: 1, 12: 0, 13: 0, 14: 0, 15: 0, 16: 0, 17: 1, 18: 0, 19: 0, 20: 0, 21: 0},
+    'W12': {1: 0, 2: 0, 3: 0, 4: 0, 5: 1, 6: 0, 7: 0, 8: 0, 9: 1, 10: 0, 11: 0, 12: 0, 13: 0, 14: 0, 15: 0, 16: 1, 17: 0, 18: 0, 19: 1, 20: 0, 21: 0},
+    'W13': {1: 0, 2: 0, 3: 1, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 1, 12: 0, 13: 0, 14: 0, 15: 0, 16: 0, 17: 1, 18: 0, 19: 0, 20: 1, 21: 0},
+    'W14': {1: 0, 2: 1, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 1, 12: 0, 13: 0, 14: 1, 15: 0, 16: 0, 17: 0, 18: 1, 19: 0, 20: 0, 21: 0},
+    'W15': {1: 0, 2: 1, 3: 0, 4: 0, 5: 0, 6: 1, 7: 0, 8: 0, 9: 0, 10: 0, 11: 1, 12: 0, 13: 1, 14: 0, 15: 0, 16: 0, 17: 0, 18: 0, 19: 0, 20: 0, 21: 0}
+}
+
+# param fixReserve :
+#       1   2   3   4   5   6   7    :=
+# W1    1   0   0   0   0   0   0
+# W2    0   0   0   0   0   0   1
+# W3    0   1   0   0   0   0   0
+# W4    0   0   0   0   0   1   0
+# W5    0   0   0   1   0   0   0
+# W6    0   0   0   0   0   1   0
+# W7    1   0   0   0   0   0   0
+# W8    0   1   0   0   0   0   0
+# W9    0   0   0   0   0   0   1
+# W10   0   0   0   0   0   1   0
+# W11   0   0   0   0   1   0   0
+# W12   0   0   0   1   0   0   0
+# W13   0   0   0   0   1   0   0
+# W14   0   0   1   0   0   0   0
+# W15   0   0   1   0   0   0   0;
+
+fixReserve = {
+    'W1': {1: 1, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0},
+    'W2': {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 1},
+    'W3': {1: 0, 2: 1, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0},
+    'W4': {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 1, 7: 0},
+    'W5': {1: 0, 2: 0, 3: 0, 4: 1, 5: 0, 6: 0, 7: 0},
+    'W6': {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 1, 7: 0},
+    'W7': {1: 1, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0},
+    'W8': {1: 0, 2: 1, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0},
+    'W9': {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 1},
+    'W10': {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 1, 7: 0},
+    'W11': {1: 0, 2: 0, 3: 0, 4: 0, 5: 1, 6: 0, 7: 0},
+    'W12': {1: 0, 2: 0, 3: 0, 4: 1, 5: 0, 6: 0, 7: 0},
+    'W13': {1: 0, 2: 0, 3: 0, 4: 0, 5: 1, 6: 0, 7: 0},
+    'W14': {1: 0, 2: 0, 3: 1, 4: 0, 5: 0, 6: 0, 7: 0},
+    'W15': {1: 0, 2: 0, 3: 1, 4: 0, 5: 0, 6: 0, 7: 0}
+}
+
+# param fixWorkDays :
+#       1   2   3   4   5   6   7    :=
+# W1    0   1   0   1   0   1   1
+# W2    1   1   1   0   0   1   0
+# W3    0   0   1   1   0   1   1
+# W4    0   1   1   1   1   0   0
+# W5    0   1   1   0   0   1   1
+# W6    1   1   0   0   1   0   1
+# W7    0   0   1   0   1   1   1
+# W8    1   0   0   1   1   0   1
+# W9    0   1   1   0   1   1   0
+# W10   1   0   0   1   1   0   1
+# W11   1   0   1   1   0   1   0
+# W12   0   1   1   0   0   1   1
+# W13   1   0   0   1   0   1   1
+# W14   1   0   0   1   1   1   0
+# W15   1   1   0   1   1   0   0;
+
+fixWorkDays = {
+    'W1': {1: 0, 2: 1, 3: 0, 4: 1, 5: 0, 6: 1, 7: 1},
+    'W2': {1: 1, 2: 1, 3: 1, 4: 0, 5: 0, 6: 1, 7: 0},
+    'W3': {1: 0, 2: 0, 3: 1, 4: 1, 5: 0, 6: 1, 7: 1},
+    'W4': {1: 0, 2: 1, 3: 1, 4: 1, 5: 1, 6: 0, 7: 0},
+    'W5': {1: 0, 2: 1, 3: 1, 4: 0, 5: 0, 6: 1, 7: 1},
+    'W6': {1: 1, 2: 1, 3: 0, 4: 0, 5: 1, 6: 0, 7: 1},
+    'W7': {1: 0, 2: 0, 3: 1, 4: 0, 5: 1, 6: 1, 7: 1},
+    'W8': {1: 1, 2: 0, 3: 0, 4: 1, 5: 1, 6: 0, 7: 1},
+    'W9': {1: 0, 2: 1, 3: 1, 4: 0, 5: 1, 6: 1, 7: 0},
+    'W10': {1: 1, 2: 0, 3: 0, 4: 1, 5: 1, 6: 0, 7: 1},
+    'W11': {1: 1, 2: 0, 3: 1, 4: 1, 5: 0, 6: 1, 7: 0},
+    'W12': {1: 0, 2: 1, 3: 1, 4: 0, 5: 0, 6: 1, 7: 1},
+    'W13': {1: 1, 2: 0, 3: 0, 4: 1, 5: 0, 6: 1, 7: 1},
+    'W14': {1: 1, 2: 0, 3: 0, 4: 1, 5: 1, 6: 1, 7: 0},
+    'W15': {1: 1, 2: 1, 3: 0, 4: 1, 5: 1, 6: 0, 7: 0}
+}
+
+# param fixOffDays :
+#       1   2   3   4   5   6   7    :=
+# W1    0   0   1   0   1   0   0
+# W2    0   0   0   1   1   0   0
+# W3    1   0   0   0   1   0   0
+# W4    1   0   0   0   0   0   1
+# W5    1   0   0   0   1   0   0
+# W6    0   0   1   1   0   0   0
+# W7    0   1   0   1   0   0   0
+# W8    0   0   1   0   0   1   0
+# W9    1   0   0   1   0   0   0
+# W10   0   1   1   0   0   0   0
+# W11   0   1   0   0   0   0   1
+# W12   1   0   0   0   1   0   0
+# W13   0   1   1   0   0   0   0
+# W14   0   1   0   0   0   0   1
+# W15   0   0   0   0   0   1   1;
+
+fixOffDays = {
+    'W1': {1: 0, 2: 0, 3: 1, 4: 0, 5: 1, 6: 0, 7: 0},
+    'W2': {1: 0, 2: 0, 3: 0, 4: 1, 5: 1, 6: 0, 7: 0},
+    'W3': {1: 1, 2: 0, 3: 0, 4: 0, 5: 1, 6: 0, 7: 0},
+    'W4': {1: 1, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 1},
+    'W5': {1: 1, 2: 0, 3: 0, 4: 0, 5: 1, 6: 0, 7: 0},
+    'W6': {1: 0, 2: 0, 3: 1, 4: 1, 5: 0, 6: 0, 7: 0},
+    'W7': {1: 0, 2: 1, 3: 0, 4: 1, 5: 0, 6: 0, 7: 0},
+    'W8': {1: 0, 2: 0, 3: 1, 4: 0, 5: 0, 6: 1, 7: 0},
+    'W9': {1: 1, 2: 0, 3: 0, 4: 1, 5: 0, 6: 0, 7: 0},
+    'W10': {1: 0, 2: 1, 3: 1, 4: 0, 5: 0, 6: 0, 7: 0},
+    'W11': {1: 0, 2: 1, 3: 0, 4: 0, 5: 0, 6: 0, 7: 1},
+    'W12': {1: 1, 2: 0, 3: 0, 4: 0, 5: 1, 6: 0, 7: 0},
+    'W13': {1: 0, 2: 1, 3: 1, 4: 0, 5: 0, 6: 0, 7: 0},
+    'W14': {1: 0, 2: 1, 3: 0, 4: 0, 5: 0, 6: 0, 7: 1},
+    'W15': {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 1, 7: 1}
+}
 
 
-def nl():
-    print()
+# Variables
+schedule = {}
+reserve = {}
+workDays = {}
+offDays = {}
+
+for w in WORKERS:
+    for s in SHIFTS:
+        schedule[w, s] = solver.BoolVar(f'schedule[{w},{s}]')
+
+    for d in DAYS:
+        reserve[w, d] = solver.BoolVar(f'reserve[{w},{d}]')
+        workDays[w, d] = solver.BoolVar(f'workDays[{w},{d}]')
+        offDays[w, d] = solver.BoolVar(f'offDays[{w},{d}]')
+
+# Fix variables for the first week
+for w in WORKERS:
+    for s in SHIFTS1:
+        schedule[w, s].SetBounds(fixShift[w][s], fixShift[w][s])
+    for d in DAYS1:
+        reserve[w, d].SetBounds(fixReserve[w][d], fixReserve[w][d])
+        workDays[w, d].SetBounds(fixWorkDays[w][d], fixWorkDays[w][d])
+        offDays[w, d].SetBounds(fixOffDays[w][d], fixOffDays[w][d])
+
+# Objective function: maximize the applications for the second week
+objective = solver.Objective()
+for w in WORKERS:
+    for s in SHIFTS2:
+        objective.SetCoefficient(schedule[w, s], newApplication[w][s])
+objective.SetMaximization()
+
+# Constraints
+# Each worker must work exactly 4 days (excluding reserve days) in the second week
+for w in WORKERS:
+    solver.Add(sum(schedule[w, s] for s in SHIFTS2) == 4)
+
+# Each worker can work at most one shift per day in the second week
+for w in WORKERS:
+    for d in DAYS2:
+        solver.Add(sum(schedule[w, (d - 1) * 3 + k] for k in range(1, 4)) <= 1)
+
+# After night shifts, workers can't have morning or afternoon shift in both weeks
+for w in WORKERS:
+    for n in NIGHTS:
+        solver.Add(sum(schedule[w, 3 + (n - 1) * 3 + k]
+                   for k in range(3)) <= 1)
+
+# Minimum required workers for each shift in the second week
+for s in SHIFTS2:
+    solver.Add(sum(schedule[w, s] for w in WORKERS) >= min_workers[s])
+
+# Each worker must have exactly one reserve day in the second week
+for w in WORKERS:
+    solver.Add(sum(reserve[w, d] for d in DAYS2) == 1)
+
+# No shifts on reserve day for each worker in the second week
+for w in WORKERS:
+    for d in DAYS2:
+        solver.Add(sum(schedule[w, (d - 1) * 3 + k]
+                   for k in range(1, 4)) <= (1 - reserve[w, d]) * 3)
+
+# Each day must have at least 2 reserve workers in the second week
+for d in DAYS2:
+    solver.Add(sum(reserve[w, d] for w in WORKERS) >= 2)
+
+# Define workDays based on schedule in the second week
+for w in WORKERS:
+    for d in DAYS2:
+        solver.Add(workDays[w, d] == solver.Sum(
+            [schedule[w, (d - 1) * 3 + k] for k in range(1, 4)]))
+
+# Define offDays based on workDays and reserve in the second week
+for w in WORKERS:
+    for d in DAYS2:
+        solver.Add(offDays[w, d] == (1 - workDays[w, d] - reserve[w, d]))
+        
+# TODO: after 6 weeks there has to be a day off (if sum 1..6 workDays >= 6 then next offDay)
+# TODO: there has to be a 2 long day off in a 2 week period (sum off[i] * off[i + 1] >= 1)
+# TODO: after a reserve there has to be a day off (if res[i] = 1 then off[i + 1] = 1)
+# TODO: before a reserve there can not be a day off (if off[i] = 1 then res[i + 1] = 0)
 
 
-def main():
-    # Define the sets
-    # Will have to change it
-    workers = ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7',
-               'W8', 'W9', 'W10', 'W11', 'W12', 'W13', 'W14', 'W15']
-    shifts = list(range(1, 22))
-    days = list(range(1, 8))
-    nights = list(range(1, 7))
+# Solve the model
+status = solver.Solve()
 
-    # Define the parameters
-    # Will have to change it
-    min_workers = {
-        1: 2, 2: 4, 3: 2, 4: 2, 5: 4, 6: 2, 7: 2, 8: 4, 9: 2, 10: 2, 11: 4,
-        12: 2, 13: 2, 14: 4, 15: 2, 16: 1, 17: 2, 18: 1, 19: 1, 20: 2, 21: 1
-    }
+if status == pywraplp.Solver.OPTIMAL:
+    print("SHIFTS")
+    for w in WORKERS:
+        print(f"{' ' if len(w) < 3 else ''}{w}: ", end=' ')
+        for s in SHIFTS:
+            print(int(schedule[w, s].solution_value()), end=' ')
+            if s == 21:
+                print('', end = ' ')
+        print()
 
-    # Will have to change it
-    application = {
-        'W1': [1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0],
-        'W2': [0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1],
-        'W3': [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1],
-        'W4': [1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1],
-        'W5': [0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0],
-        'W6': [1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0],
-        'W7': [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1],
-        'W8': [1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0],
-        'W9': [1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0],
-        'W10': [1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0],
-        'W11': [0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1],
-        'W12': [0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-        'W13': [1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1],
-        'W14': [0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1],
-        'W15': [1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1]
-    }
-
-    # Create the solver with the SCIP backend
-    solver = pywraplp.Solver.CreateSolver('SCIP')
-    if not solver:
-        print('SCIP solver unavailable.')
-        return
-
-    # Create the variables
-    # var x{WORKERS, SHIFTS} binary;  # Binary variable indicating worker assignment
-    x = {}
-    for i in workers:
-        for j in shifts:
-            x[i, j] = solver.BoolVar(f'x[{i},{j}]')
-
-    # var res{WORKERS, DAYS} binary;  # Binary variable indicating reserve day
-    res = {}
-    for i in workers:
-        for j in shifts:
-            res[i, j] = solver.BoolVar(f'res[{i},{j}]')
-
-    # Objective function: maximize the total match
-    # maximize Total_Match:
-    #   sum {i in WORKERS, j in SHIFTS} x[i, j] * application[i, j];
-    objective = solver.Objective()
-    for i in workers:
-        for j in shifts:
-            objective.SetCoefficient(x[i, j], application[i][j-1])
-    objective.SetMaximization()
-
-    # Constraint: each worker must work exactly 5 days (excluding reserve days)
-    # subject to Work_Constraint {i in WORKERS}:
-    #   sum {j in SHIFTS} x[i,j] = 5;
-    for i in workers:
-        solver.Add(sum(x[i, j] for j in shifts) == 5)
-
-    # Constraint: each worker can work at most one shift per day
-    # subject to Max_One_Shift_Per_Day {i in WORKERS, j in DAYS}:
-    #   sum {k in 1..3} x[i, (j - 1) * 3 + k] <= 1;
-    for i in workers:
-        for j in days:
-            solver.Add(sum(x[i, (j - 1) * 3 + k] for k in range(1, 4)) <= 1)
-
-    # Constraint: workers can't have any morning or afternoon shift after night shifts
-    # subject to Night_Shifts {i in WORKERS, j in NIGHTS}:
-    #   sum {k in 0..2} x[i, 3 + (j - 1) * 3 + k] <= 1;
-    for i in workers:
-        for j in nights:
-            solver.Add(sum(x[i, 3 + (j - 1) * 3 + k] for k in range(3)) <= 1)
-
-    # Constraint: minimum required workers for each shift
-    # subject to Min_Workers_Constraint {j in SHIFTS}:
-    #   sum {i in WORKERS} x[i,j] >= min_workers[j];
-    for j in shifts:
-        solver.Add(sum(x[i, j] for i in workers) >= min_workers[j])
-
-    # Constraint: minimum required reserves for each day
-    # subject to Min_Reserve_Workers_Per_Day {j in DAYS}:
-    #   sum {i in WORKERS} res[i, j] >= 2;
-    for j in days:
-        solver.Add(sum(res[i, j] for i in workers) >= 2)
-
-    # Constraint: each worker must have exactly one reserve day
-    # subject to Reserve_Constraint {i in WORKERS}:
-    #   sum {j in DAYS} res[i, j] = 1;
-    for i in workers:
-        solver.Add(sum(res[i, j] for j in days) == 1)
-
-    # Constraint: no shifts on reserve day for each worker
-    # subject to No_Shift_On_Reserve_Day {i in WORKERS, j in DAYS}:
-    #   sum {k in 1..3} x[i, (j - 1) * 3 + k] <= (1 - res[i, j]) * 3;
-    for i in workers:
-        for j in days:
-            solver.Add(sum(x[i, (j - 1) * 3 + k]
-                       for k in range(1, 4)) <= (1 - res[i, j]))
-
-    # Solve the problem
-    status = solver.Solve()
-
-    if status == pywraplp.Solver.OPTIMAL:
-        print("Solution:")
-        for i in workers:
-            # print(f"Worker {i} is assigned to shifts:", end=" ")
-            print(f"{i}:", end=" ")
-            for j in shifts:
-                # if x[i, j].solution_value() == 1:
-                #     print(j, end=" ")
-                print(int(x[i, j].solution_value()), ' ', end=" ")
-            nl()
-        for i in workers:
-            print(f"{i}:", end=" ")
-            for j in days:
-                print(int(res[i, j].solution_value()), ' ', end=" ")
-            nl()
-        print(f"Total match value = {solver.Objective().Value()}")
-        print(f"Objective value (Total match value) = {solver.Objective().Value()}")
-    else:
-        print("No optimal solution found!")
-
-    # Statistics
-    print("\nStatistics")
-    print(f"  - wall time: {solver.WallTime()}s")
-
-
-if __name__ == "__main__":
-    main()
+    for w in WORKERS:
+        print(f"{' ' if len(w) < 3 else ''}{w}: ", end=' ')
+        for d in DAYS:
+            print('1' if int(workDays[w, d].solution_value()) == 1 else '0' if int(offDays[w, d].solution_value()) == 1 else '2', end=' ')
+            if d == 7:
+                print('', end = ' ')
+        print()
+else:
+    print('No solution found.')
