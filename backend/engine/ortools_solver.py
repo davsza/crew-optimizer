@@ -7,13 +7,16 @@ solver = pywraplp.Solver.CreateSolver('SCIP')
 # Sets
 WORKERS = ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7',
            'W8', 'W9', 'W10', 'W11', 'W12', 'W13', 'W14', 'W15']
-SHIFTS = range(1, 43)  # 1-42
-SHIFTS1 = range(1, 22)  # 1-21
-SHIFTS2 = range(22, 43)  # 22-42
-DAYS = range(1, 15)  # 1-14
-DAYS1 = range(1, 8)  # 1-7
-DAYS2 = range(8, 15)  # 8-14
-NIGHTS = range(1, 14)  # 1-13
+SHIFT_INDEX_1_42 = range(1, 43)  # 1-42
+SHIFT_INDEX_1_21 = range(1, 22)  # 1-21
+SHIFT_INDEX_22_42 = range(22, 43)  # 22-42
+DAYS_INDEX_1_7 = range(1, 8)  # 1-7
+DAYS_INDEX_1_8 = range(1, 9)  # 1-8
+DAYS_INDEX_1_13 = range(1, 14)  # 1-13
+DAYS_INDEX_1_14 = range(1, 15)  # 1-14
+DAYS_INDEX_2_14 = range(2, 15)  # 2-14
+DAYS_INDEX_8_14 = range(8, 15)  # 8-14
+
 
 # Parameters
 min_workers = {
@@ -217,19 +220,19 @@ workDays = {}
 offDays = {}
 
 for w in WORKERS:
-    for s in SHIFTS:
+    for s in SHIFT_INDEX_1_42:
         schedule[w, s] = solver.BoolVar(f'schedule[{w},{s}]')
 
-    for d in DAYS:
+    for d in DAYS_INDEX_1_14:
         reserve[w, d] = solver.BoolVar(f'reserve[{w},{d}]')
         workDays[w, d] = solver.BoolVar(f'workDays[{w},{d}]')
         offDays[w, d] = solver.BoolVar(f'offDays[{w},{d}]')
 
 # Fix variables for the first week
 for w in WORKERS:
-    for s in SHIFTS1:
+    for s in SHIFT_INDEX_1_21:
         schedule[w, s].SetBounds(fixShift[w][s], fixShift[w][s])
-    for d in DAYS1:
+    for d in DAYS_INDEX_1_7:
         reserve[w, d].SetBounds(fixReserve[w][d], fixReserve[w][d])
         workDays[w, d].SetBounds(fixWorkDays[w][d], fixWorkDays[w][d])
         offDays[w, d].SetBounds(fixOffDays[w][d], fixOffDays[w][d])
@@ -237,60 +240,72 @@ for w in WORKERS:
 # Objective function: maximize the applications for the second week
 objective = solver.Objective()
 for w in WORKERS:
-    for s in SHIFTS2:
+    for s in SHIFT_INDEX_22_42:
         objective.SetCoefficient(schedule[w, s], newApplication[w][s])
 objective.SetMaximization()
 
 # Constraints
 # Each worker must work exactly 4 days (excluding reserve days) in the second week
 for w in WORKERS:
-    solver.Add(sum(schedule[w, s] for s in SHIFTS2) == 4)
+    solver.Add(sum(schedule[w, s] for s in SHIFT_INDEX_22_42) == 4)
 
 # Each worker can work at most one shift per day in the second week
 for w in WORKERS:
-    for d in DAYS2:
+    for d in DAYS_INDEX_8_14:
         solver.Add(sum(schedule[w, (d - 1) * 3 + k] for k in range(1, 4)) <= 1)
 
 # After night shifts, workers can't have morning or afternoon shift in both weeks
 for w in WORKERS:
-    for n in NIGHTS:
+    for n in DAYS_INDEX_1_13:
         solver.Add(sum(schedule[w, 3 + (n - 1) * 3 + k]
                    for k in range(3)) <= 1)
 
 # Minimum required workers for each shift in the second week
-for s in SHIFTS2:
+for s in SHIFT_INDEX_22_42:
     solver.Add(sum(schedule[w, s] for w in WORKERS) >= min_workers[s])
 
 # Each worker must have exactly one reserve day in the second week
 for w in WORKERS:
-    solver.Add(sum(reserve[w, d] for d in DAYS2) == 1)
+    solver.Add(sum(reserve[w, d] for d in DAYS_INDEX_8_14) == 1)
 
 # No shifts on reserve day for each worker in the second week
 for w in WORKERS:
-    for d in DAYS2:
+    for d in DAYS_INDEX_8_14:
         solver.Add(sum(schedule[w, (d - 1) * 3 + k]
                    for k in range(1, 4)) <= (1 - reserve[w, d]) * 3)
 
 # Each day must have at least 2 reserve workers in the second week
-for d in DAYS2:
+for d in DAYS_INDEX_8_14:
     solver.Add(sum(reserve[w, d] for w in WORKERS) >= 2)
 
 # Define workDays based on schedule in the second week
 for w in WORKERS:
-    for d in DAYS2:
+    for d in DAYS_INDEX_8_14:
         solver.Add(workDays[w, d] == solver.Sum(
             [schedule[w, (d - 1) * 3 + k] for k in range(1, 4)]))
 
 # Define offDays based on workDays and reserve in the second week
 for w in WORKERS:
-    for d in DAYS2:
+    for d in DAYS_INDEX_8_14:
         solver.Add(offDays[w, d] == (1 - workDays[w, d] - reserve[w, d]))
 
-# TODO: after 6 weeks there has to be a day off (if sum 1..6 workDays >= 6 then next offDay)
-# TODO: there has to be a 2 long day off in a 2 week period (sum off[i] * off[i + 1] >= 1)
-# TODO: after a reserve there has to be a day off (if res[i] = 1 then off[i + 1] = 1)
-# TODO: before a reserve there can not be a day off (if off[i] = 1 then res[i + 1] = 0)
+# Constraint to ensure at least one off day in every 7-day window
+for w in WORKERS:
+    for start_day in DAYS_INDEX_1_8:
+        solver.Add(sum(workDays[w, d] for d in range(start_day, start_day + 7)) +
+                   sum(reserve[w, d] for d in range(start_day, start_day + 7)) <= 6)
 
+# TODO: there has to be a 2 long day off in a 2 week period (sum off[i] * off[i + 1] >= 1)
+
+# Constraint to ensure a reserve day follows a day off
+for w in WORKERS:
+    for d in DAYS_INDEX_1_13:
+        solver.Add(offDays[w, d + 1] >= reserve[w, d])
+
+# Constraint to ensure a reserve day cannot be preceded by an off day
+for w in WORKERS:
+    for d in DAYS_INDEX_2_14:
+        solver.Add(offDays[w, d - 1] <= 1 - reserve[w, d])
 
 # Solve the model
 status = solver.Solve()
@@ -314,7 +329,7 @@ if status == pywraplp.Solver.OPTIMAL:
     nl()
     for w in WORKERS:
         print(f"{' ' if len(w) < 3 else ''}{w}: ", end=' ')
-        for s in SHIFTS:
+        for s in SHIFT_INDEX_1_42:
             print(int(schedule[w, s].solution_value()), end=' ')
             if s % 3 == 0:
                 space(1)
@@ -328,7 +343,7 @@ if status == pywraplp.Solver.OPTIMAL:
     print()
     for w in WORKERS:
         print(f"{' ' if len(w) < 3 else ''}{w}: ", end=' ')
-        for d in DAYS:
+        for d in DAYS_INDEX_1_14:
             print('W' if int(workDays[w, d].solution_value()) == 1 else 'O' if int(
                 offDays[w, d].solution_value()) == 1 else 'R', end=' ')
             if d == 7:

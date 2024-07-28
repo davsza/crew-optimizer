@@ -1,0 +1,46 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\begin{document}
+
+\section*{Optimization Model}
+
+\subsection*{Variables}
+\begin{align*}
+\text{schedule}[w, s] & \quad \forall w \in \text{W}, \forall s \in \text{S\_1\_42} \\
+\text{reserve}[w, d] & \quad \forall w \in \text{W}, \forall d \in \text{D\_1\_14} \\
+\text{workDays}[w, d] & \quad \forall w \in \text{W}, \forall d \in \text{D\_1\_14} \\
+\text{offDays}[w, d] & \quad \forall w \in \text{W}, \forall d \in \text{D\_1\_14}
+\end{align*}
+
+\subsection*{Fixed Variables for the First Week}
+\begin{align*}
+\text{Fix } \text{schedule}[w, s] & \quad \forall w \in \text{W}, \forall s \in \text{S\_1\_21} \\
+\text{Fix } \text{reserve}[w, d] & \quad \forall w \in \text{W}, \forall d \in \text{D\_1\_7} \\
+\text{Fix } \text{workDays}[w, d] & \quad \forall w \in \text{W}, \forall d \in \text{D\_1\_7} \\
+\text{Fix } \text{offDays}[w, d] & \quad \forall w \in \text{W}, \forall d \in \text{D\_1\_7}
+\end{align*}
+
+\subsection*{Objective Function}
+\[
+\text{Maximize } \sum_{w \in \text{W}} \sum_{s \in \text{S\_22\_42}} \text{application}[w, s] \cdot \text{schedule}[w, s]
+\]
+
+\subsection*{Constraints}
+\begin{align*}
+\sum_{s \in \text{S\_22\_42}} \text{schedule}[w, s] &= 4 & \forall w \in \text{W} \\
+\sum_{k=1}^{3} \text{schedule}[w, (d-1) \cdot 3 + k] &\leq 1 & \forall w \in \text{W}, \forall d \in \text{D\_8\_14} \\
+\sum_{k=0}^{2} \text{schedule}[w, 3 + (n-1) \cdot 3 + k] &\leq 1 & \forall w \in \text{W}, \forall n \in \text{D\_1\_13} \\
+\sum_{w \in \text{W}} \text{schedule}[w, s] &\geq \text{min\_W}[s] & \forall s \in \text{S\_22\_42} \\
+\sum_{d \in \text{D\_8\_14}} \text{reserve}[w, d] &= 1 & \forall w \in \text{W} \\
+\sum_{k=1}^{3} \text{schedule}[w, (d-1) \cdot 3 + k] &\leq (1 - \text{reserve}[w, d]) \cdot 3 & \forall w \in \text{W}, \forall d \in \text{D\_8\_14} \\
+\sum_{w \in \text{W}} \text{reserve}[w, d] &\geq 2 & \forall d \in \text{D\_8\_14} \\
+\text{workDays}[w, d] &= \sum_{k=1}^{3} \text{schedule}[w, (d-1) \cdot 3 + k] & \forall w \in \text{W}, \forall d \in \text{D\_8\_14} \\
+\text{offDays}[w, d] &= 1 - \text{workDays}[w, d] - \text{reserve}[w, d] & \forall w \in \text{W}, \forall d \in \text{D\_8\_14} \\
+\sum_{d = \text{start\_day}}^{\text{start\_day}+6} (\text{workDays}[w, d] + \text{reserve}[w, d]) &\leq 6 & \forall w \in \text{W}, \forall \text{start\_day} \in \text{D\_1\_8} \\
+\text{offDays}[w, d + 1] &\geq \text{reserve}[w, d] & \forall w \in \text{W}, \forall d \in \text{D\_1\_13} \\
+\text{offDays}[w, d - 1] &\leq 1 - \text{reserve}[w, d] & \forall w \in \text{W}, \forall d \in \text{D\_2\_14}
+\end{align*}
+
+\end{document}
