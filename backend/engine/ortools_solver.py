@@ -15,7 +15,9 @@ DAYS_INDEX_1_8 = range(1, 9)  # 1-8
 DAYS_INDEX_1_13 = range(1, 14)  # 1-13
 DAYS_INDEX_1_14 = range(1, 15)  # 1-14
 DAYS_INDEX_2_14 = range(2, 15)  # 2-14
+DAYS_INDEX_8_13 = range(8, 14)  # 8-13
 DAYS_INDEX_8_14 = range(8, 15)  # 8-14
+DAYS_INDEX_9_14 = range(9, 15)  # 9-14
 
 
 # Parameters
@@ -245,67 +247,66 @@ for w in WORKERS:
 objective.SetMaximization()
 
 # Constraints
-# Each worker must work exactly 4 days (excluding reserve days) in the second week
+
 for w in WORKERS:
+
+    # Each worker must work exactly 4 days (excluding reserve days) in the second week
     solver.Add(sum(schedule[w, s] for s in SHIFT_INDEX_22_42) == 4)
 
-# Each worker can work at most one shift per day in the second week
-for w in WORKERS:
+    # Each worker can work at most one shift per day in the second week
     for d in DAYS_INDEX_8_14:
         solver.Add(sum(schedule[w, (d - 1) * 3 + k] for k in range(1, 4)) <= 1)
 
-# After night shifts, workers can't have morning or afternoon shift in both weeks
-for w in WORKERS:
+    # After night shifts, workers can't have morning or afternoon shift in both weeks
     for n in DAYS_INDEX_1_13:
         solver.Add(sum(schedule[w, 3 + (n - 1) * 3 + k]
                    for k in range(3)) <= 1)
+
+    # Each worker must have exactly one reserve day in the second week
+    solver.Add(sum(reserve[w, d] for d in DAYS_INDEX_8_14) == 1)
+
+    # No shifts on reserve day for each worker in the second week
+    for d in DAYS_INDEX_8_14:
+        solver.Add(sum(schedule[w, (d - 1) * 3 + k]
+                   for k in range(1, 4)) <= (1 - reserve[w, d]) * 3)
+
+    # Define workDays based on schedule in the second week
+    for d in DAYS_INDEX_8_14:
+        solver.Add(workDays[w, d] == solver.Sum(
+            [schedule[w, (d - 1) * 3 + k] for k in range(1, 4)]))
+
+    # Define offDays based on workDays and reserve in the second week
+    for d in DAYS_INDEX_8_14:
+        solver.Add(offDays[w, d] == (1 - workDays[w, d] - reserve[w, d]))
+
+    # Ensure at least one off day in every 7-day window
+    for start_day in DAYS_INDEX_1_8:
+        solver.Add(sum(workDays[w, d] for d in range(start_day, start_day + 7)) +
+                   sum(reserve[w, d] for d in range(start_day, start_day + 7)) <= 6)
+
+    # Ensure a reserve day follows a day off
+    for d in DAYS_INDEX_8_13:
+        solver.Add(offDays[w, d + 1] >= reserve[w, d])
+
+    # Ensure a reserve day cannot be preceded by an off day
+    for d in DAYS_INDEX_9_14:
+        solver.Add(offDays[w, d - 1] <= 1 - reserve[w, d])
+    
+    # solver.Add(sum(offDays[w, d] + offDays[w, d + 1] for d in DAYS_INDEX_8_13) == 4)
+
 
 # Minimum required workers for each shift in the second week
 for s in SHIFT_INDEX_22_42:
     solver.Add(sum(schedule[w, s] for w in WORKERS) >= min_workers[s])
 
-# Each worker must have exactly one reserve day in the second week
-for w in WORKERS:
-    solver.Add(sum(reserve[w, d] for d in DAYS_INDEX_8_14) == 1)
-
-# No shifts on reserve day for each worker in the second week
-for w in WORKERS:
-    for d in DAYS_INDEX_8_14:
-        solver.Add(sum(schedule[w, (d - 1) * 3 + k]
-                   for k in range(1, 4)) <= (1 - reserve[w, d]) * 3)
 
 # Each day must have at least 2 reserve workers in the second week
 for d in DAYS_INDEX_8_14:
     solver.Add(sum(reserve[w, d] for w in WORKERS) >= 2)
 
-# Define workDays based on schedule in the second week
-for w in WORKERS:
-    for d in DAYS_INDEX_8_14:
-        solver.Add(workDays[w, d] == solver.Sum(
-            [schedule[w, (d - 1) * 3 + k] for k in range(1, 4)]))
-
-# Define offDays based on workDays and reserve in the second week
-for w in WORKERS:
-    for d in DAYS_INDEX_8_14:
-        solver.Add(offDays[w, d] == (1 - workDays[w, d] - reserve[w, d]))
-
-# Constraint to ensure at least one off day in every 7-day window
-for w in WORKERS:
-    for start_day in DAYS_INDEX_1_8:
-        solver.Add(sum(workDays[w, d] for d in range(start_day, start_day + 7)) +
-                   sum(reserve[w, d] for d in range(start_day, start_day + 7)) <= 6)
 
 # TODO: there has to be a 2 long day off in a 2 week period (sum off[i] * off[i + 1] >= 1)
 
-# Constraint to ensure a reserve day follows a day off
-for w in WORKERS:
-    for d in DAYS_INDEX_1_13:
-        solver.Add(offDays[w, d + 1] >= reserve[w, d])
-
-# Constraint to ensure a reserve day cannot be preceded by an off day
-for w in WORKERS:
-    for d in DAYS_INDEX_2_14:
-        solver.Add(offDays[w, d - 1] <= 1 - reserve[w, d])
 
 # Solve the model
 status = solver.Solve()
