@@ -6,6 +6,7 @@ from .serializers import UserSerializer, ShiftSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import Shift
 from django.http import JsonResponse
+from .solver import solve
 
 
 class ShiftGivenWeekQuery(generics.ListAPIView):
@@ -96,3 +97,8 @@ def get_user_details(request):
 
     user_dict = {user['id']: user['username'] for user in users}
     return JsonResponse(user_dict)
+
+
+def get_success_button(request):
+    result = {"result": solve()}
+    return JsonResponse(result)

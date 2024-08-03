@@ -25,6 +25,7 @@ function Home() {
   const [application, setApplication] = useState("");
   const [userGroup, setUserGroup] = useState("");
   const [userName, setUserName] = useState("");
+  const [successString, setSuccessString] = useState("");
 
   const getFinalShift = (week) => {
     api
@@ -67,6 +68,17 @@ function Home() {
       .catch((err) => alert(err));
   };
 
+  const fetchSuccess = () => {
+    api
+      .get("/api/get-success-button/")
+      .then((res) => res.data)
+      .then((data) => {
+        setSuccessString(data);
+        console.log(data);
+      })
+      .catch((err) => console.log(err));
+  };
+
   useEffect(() => {
     getFinalShift(week);
     getAppliedShift(appliedShiftWeek);
@@ -93,7 +105,7 @@ function Home() {
 
   const handleDropdownChange = (value) => {
     const option = Boolean(value);
-    console.log(option)
+    console.log(option);
     setSelectedOption(option);
   };
 
@@ -164,6 +176,7 @@ function Home() {
                 shiftsData={allShifts}
                 finalShift={selectedOption}
               />
+              <button onClick={fetchSuccess}>Press me</button>
             </>
           )}
         </div>

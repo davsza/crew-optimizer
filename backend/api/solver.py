@@ -1,8 +1,21 @@
 from ortools.linear_solver import pywraplp
 import random
+from .functions import get_current_week
+from .models import Shift
+from django.contrib.auth.models import User, Group
+
 
 # Create the solver
 solver = pywraplp.Solver.CreateSolver('SCIP')
+
+current_week = get_current_week()
+
+if_print = False
+
+
+def solve():
+    return "Success"
+
 
 # Sets
 WORKERS = ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7',
@@ -291,7 +304,7 @@ for w in WORKERS:
     # Ensure a reserve day cannot be preceded by an off day
     for d in DAYS_INDEX_9_14:
         solver.Add(offDays[w, d - 1] <= 1 - reserve[w, d])
-    
+
     # solver.Add(sum(offDays[w, d] + offDays[w, d + 1] for d in DAYS_INDEX_8_13) == 4)
 
 
@@ -322,33 +335,34 @@ def space(times):
     print(' ' * times, end='')
 
 
-if status == pywraplp.Solver.OPTIMAL:
-    print("SHIFTS")
-    space(7)
-    for day in 2 * days:
-        print(day, '   ', end='')
-    nl()
-    for w in WORKERS:
-        print(f"{' ' if len(w) < 3 else ''}{w}: ", end=' ')
-        for s in SHIFT_INDEX_1_42:
-            print(int(schedule[w, s].solution_value()), end=' ')
-            if s % 3 == 0:
-                space(1)
+if if_print:
+    if status == pywraplp.Solver.OPTIMAL:
+        print("SHIFTS")
+        space(7)
+        for day in 2 * days:
+            print(day, '   ', end='')
         nl()
-    nl()
-    space(6)
-    for day in 2 * days:
-        print(day[0], end=' ')
-        if day == "Sun":
-            space(1)
-    print()
-    for w in WORKERS:
-        print(f"{' ' if len(w) < 3 else ''}{w}: ", end=' ')
-        for d in DAYS_INDEX_1_14:
-            print('W' if int(workDays[w, d].solution_value()) == 1 else 'O' if int(
-                offDays[w, d].solution_value()) == 1 else 'R', end=' ')
-            if d == 7:
-                space(1)
+        for w in WORKERS:
+            print(f"{' ' if len(w) < 3 else ''}{w}: ", end=' ')
+            for s in SHIFT_INDEX_1_42:
+                print(int(schedule[w, s].solution_value()), end=' ')
+                if s % 3 == 0:
+                    space(1)
+            nl()
         nl()
-else:
-    print('No solution found.')
+        space(6)
+        for day in 2 * days:
+            print(day[0], end=' ')
+            if day == "Sun":
+                space(1)
+        print()
+        for w in WORKERS:
+            print(f"{' ' if len(w) < 3 else ''}{w}: ", end=' ')
+            for d in DAYS_INDEX_1_14:
+                print('W' if int(workDays[w, d].solution_value()) == 1 else 'O' if int(
+                    offDays[w, d].solution_value()) == 1 else 'R', end=' ')
+                if d == 7:
+                    space(1)
+            nl()
+    else:
+        print('No solution found.')

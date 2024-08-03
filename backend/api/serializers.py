@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import Shift
+from .models import Shift, Message
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -18,5 +18,12 @@ class ShiftSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shift
         fields = ["id", "week", "year", "applied_shift", "actual_shift", "work_days", "off_days", "reserve_days",
-                  "application_last_modified", "actual_last_modified", "reserve_last_modified", "owner"]
+                  "owner"]
+        extra_kwargs = {"owner": {"read_only": True}}
+
+
+class MessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Message
+        fields = ["id", "text", "date", "sent_by_user", "owner"]
         extra_kwargs = {"owner": {"read_only": True}}
