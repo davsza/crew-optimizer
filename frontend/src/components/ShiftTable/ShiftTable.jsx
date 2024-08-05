@@ -1,22 +1,22 @@
 import React from "react";
-import "../styles/ShiftTable.css";
+import "./ShiftTable.css";
 import {
   MONTHS,
   getStartDateOfWeek,
   formatDate,
   datePlusDays,
-} from "../constants";
-import ShiftDisplay from "./ShiftDisplay";
+} from "../../constants";
+import ShiftDisplay from "../ShiftDisplay/ShiftDisplay";
 
 const ShiftTable = ({ shift, isAcceptedShift }) => {
-  const appliedShift = isAcceptedShift
+  const currentShift = isAcceptedShift
     ? shift.actual_shift
     : shift.applied_shift;
 
   if (
-    !appliedShift ||
-    typeof appliedShift !== "string" ||
-    appliedShift.length !== 21
+    !currentShift ||
+    typeof currentShift !== "string" ||
+    currentShift.length !== 21
   ) {
     return <div>Error: Invalid schedule string.</div>;
   }
@@ -39,13 +39,19 @@ const ShiftTable = ({ shift, isAcceptedShift }) => {
       </thead>
       <tbody>
         {[0, 1, 2, 3, 4, 5, 6].map((day) => {
-          const shifts = appliedShift.substring(day * 3, day * 3 + 3).split("");
-          const hasShift = shifts.includes("1");
+          const shiftOfTheDay = currentShift
+            .substring(day * 3, day * 3 + 3)
+            .split("");
+          const workDays = shift.work_days;
+          const offDays = shift.off_days;
+          const reserveDays = shift.reserve_days;
           const displayDate = datePlusDays(startDate, day);
           const currDay = new Date();
           let additionClass = false;
 
-          if (displayDate.setHours(0, 0, 0, 0) == currDay.setHours(0, 0, 0, 0)) {
+          if (
+            displayDate.setHours(0, 0, 0, 0) == currDay.setHours(0, 0, 0, 0)
+          ) {
             additionClass = true;
           }
 
@@ -55,9 +61,13 @@ const ShiftTable = ({ shift, isAcceptedShift }) => {
                 <div className="flex-container">
                   <div className="vertical-text">{formatDate(displayDate)}</div>
                   <ShiftDisplay
-                    hasShift={hasShift}
-                    shifts={shifts}
+                    shiftOfTheDay={shiftOfTheDay}
                     highlighted={additionClass}
+                    workDays={workDays}
+                    offDays={offDays}
+                    reserveDays={reserveDays}
+                    day={day}
+                    isAcceptedShift={isAcceptedShift}
                   />
                 </div>
               </td>

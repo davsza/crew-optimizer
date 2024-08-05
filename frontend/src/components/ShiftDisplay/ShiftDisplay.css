@@ -10,6 +10,11 @@
   flex-direction: column;
   padding-top: 5px;
   padding-bottom: 5px;
+  transition: transform 0.3s ease, width 0.3s ease, height 0.3s ease;
+}
+
+.outer:hover {
+  transform: scale(1.03);
 }
 
 .inner {
@@ -28,5 +33,7 @@
 }
 
 .highlighted {
-  background-color: #868686;
+  border: 4px solid #007bff;
+  padding-top: 2px;
+  padding-bottom: 2px;
 }

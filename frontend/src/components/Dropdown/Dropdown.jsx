@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
-import api from "../api";
+import api from "../../api";
 import {
   getCurrentWeek,
   getStartDateOfWeek,
   getEndDateOfWeek,
   formatDate,
-} from "../constants";
-import "../styles/Dropdown.css";
+} from "../../constants";
+import "./Dropdown.css";
 
 const Dropdown = ({ year, finalShifts, onSelectWeek }) => {
   const [options, setOptions] = useState([]);

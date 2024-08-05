@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "../styles/ModeDropdown.css";
+import "./ModeDropdown.css";
 
 const ModeDropdown = ({ onChange }) => {
   const [selectedValue, setSelectedValue] = useState("true");

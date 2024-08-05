@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import api from "../api";
-import ShiftPanel from "../components/ShitPanel";
-import Header from "../components/Header";
-import Dropdown from "../components/Dropdown";
-import ModeDropdown from "../components/ModeDropdown";
-import AdminShiftTable from "../components/AdminShiftTable";
-import "../styles/Home.css";
-import { getCurrentWeek, getCurrentYear } from "../constants";
+import api from "../../api";
+import ShiftPanel from "../../components/ShiftPanel/ShitPanel";
+import Header from "../../components/Header/Header";
+import Dropdown from "../../components/Dropdown/Dropdown";
+import ModeDropdown from "../../components/ModeDropdown/ModeDropdown";
+import AdminShiftTable from "../../components/AdminShiftTable/AdminShiftTable";
+import "./Home.css";
+import { getCurrentWeek, getCurrentYear } from "../../constants";
 
 function Home() {
   const week = getCurrentWeek(0);
@@ -172,10 +172,7 @@ function Home() {
                 finalShifts={false}
                 onSelectWeek={handleSelectWeekForAppliedShifts}
               />
-              <AdminShiftTable
-                shiftsData={allShifts}
-                finalShift={selectedOption}
-              />
+              <AdminShiftTable shiftsData={allShifts} mode={selectedOption} />
               <button onClick={fetchSuccess}>Press me</button>
             </>
           )}

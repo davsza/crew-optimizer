@@ -1,6 +1,6 @@
 import React from "react";
-import "../styles/ShiftPanel.css";
-import ShiftTable from "../components/ShiftTable";
+import "./ShiftPanel.css";
+import ShiftTable from "../ShiftTable/ShiftTable";
 
 const ShiftPanel = ({ actualShift, appliedShift }) => {
   return (

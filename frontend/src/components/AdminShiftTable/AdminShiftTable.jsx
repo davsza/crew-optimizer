@@ -1,20 +1,36 @@
 import React, { useState, useEffect } from "react";
-import api from "../api";
-import ShiftDisplay from "./ShiftDisplay";
-import "../styles/AdminShiftTable.css";
+import api from "../../api";
+import ShiftDisplay from "../ShiftDisplay/ShiftDisplay";
+import "./AdminShiftTable.css";
 
-const RenderShifts = ({ appliedShift, day }) => {
-  const shifts = appliedShift.substring(day * 3, day * 3 + 3).split("");
-  const hasShift = shifts.includes("1");
+const RenderShifts = ({ isAcceptedShift, shift, day, user }) => {
+  const currentShift = isAcceptedShift
+    ? shift.applied_shift
+    : shift.actual_shift;
+  const shiftOfTheDay = currentShift.substring(day * 3, day * 3 + 3).split("");
+  const workDays = shift.work_days;
+  const offDays = shift.off_days;
+  const reserveDays = shift.reserve_days;
+  console.log(user, isAcceptedShift, currentShift);
   return (
     <td key={day}>
-      <ShiftDisplay hasShift={hasShift} shifts={shifts}></ShiftDisplay>
+      <ShiftDisplay
+        shiftOfTheDay={shiftOfTheDay}
+        highlighted={false}
+        workDays={workDays}
+        offDays={offDays}
+        reserveDays={reserveDays}
+        day={day}
+        isAcceptedShift={isAcceptedShift}
+      ></ShiftDisplay>
     </td>
   );
 };
 
-const AdminShiftTable = ({ shiftsData, finalShift }) => {
+const AdminShiftTable = ({ shiftsData, mode }) => {
   const [usernames, setUsernames] = useState({});
+
+  const isAcceptedShift = mode === "true" ? true : false;
 
   const fetchUserName = () => {
     api
@@ -55,9 +71,11 @@ const AdminShiftTable = ({ shiftsData, finalShift }) => {
               <td>{getUsernameById(shift.owner)}</td>
               {[0, 1, 2, 3, 4, 5, 6].map((dayIndex) => (
                 <RenderShifts
-                  key={`${dayIndex}-${finalShift}`}
-                  appliedShift={finalShift ? shift.applied_shift : shift.actual_shift}
+                  key={`${dayIndex}-${isAcceptedShift}`}
+                  isAcceptedShift={isAcceptedShift}
+                  shift={shift}
                   day={dayIndex}
+                  user={getUsernameById(shift.owner)}
                 />
               ))}
             </tr>
