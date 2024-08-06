@@ -16,8 +16,8 @@ const ModeDropdown = ({ onChange }) => {
       onChange={handleChange}
       className="modedropdown"
     >
-      <option value="true">Applied shifts</option>
-      <option value="">Actual shifts</option>
+      <option value="true">Schedule</option>
+      <option value="">Applied schedule</option>
     </select>
   );
 };

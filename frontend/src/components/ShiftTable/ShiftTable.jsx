@@ -13,6 +13,8 @@ const ShiftTable = ({ shift, isAcceptedShift }) => {
     ? shift.actual_shift
     : shift.applied_shift;
 
+  const shiftLabel = isAcceptedShift ? "Schedule" : "Applied schedule";
+
   if (
     !currentShift ||
     typeof currentShift !== "string" ||
@@ -32,7 +34,7 @@ const ShiftTable = ({ shift, isAcceptedShift }) => {
       <thead>
         <tr>
           <th>
-            {MONTHS[startDate.getMonth()]} {startDay} -{" "}
+            {shiftLabel} for {MONTHS[startDate.getMonth()]} {startDay} -{" "}
             {MONTHS[endDate.getMonth()]} {endDay}
           </th>
         </tr>
@@ -61,7 +63,7 @@ const ShiftTable = ({ shift, isAcceptedShift }) => {
                 <div className="flex-container">
                   <div className="vertical-text">{formatDate(displayDate)}</div>
                   <ShiftDisplay
-                    shiftOfTheDay={shiftOfTheDay}
+                    scheduleOfTheDay={shiftOfTheDay}
                     highlighted={additionClass}
                     workDays={workDays}
                     offDays={offDays}

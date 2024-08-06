@@ -2,11 +2,11 @@ import React from "react";
 import "./ShiftPanel.css";
 import ShiftTable from "../ShiftTable/ShiftTable";
 
-const ShiftPanel = ({ actualShift, appliedShift }) => {
+const ShiftPanel = ({ schedule, appliedSchedule }) => {
   return (
     <div className="table-container">
-      <ShiftTable shift={actualShift} isAcceptedShift={true} />
-      <ShiftTable shift={appliedShift} isAcceptedShift={false} />
+      <ShiftTable shift={schedule} isAcceptedShift={true} />
+      <ShiftTable shift={appliedSchedule} isAcceptedShift={false} />
     </div>
   );
 };

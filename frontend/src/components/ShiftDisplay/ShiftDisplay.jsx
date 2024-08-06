@@ -2,7 +2,8 @@ import { getStartingHours, getFinishingHours } from "../../constants";
 import "./ShiftDisplay.css";
 
 const ShiftDisplay = ({
-  shiftOfTheDay,
+  scheduleOfTheDay,
+  appliedScheduleOfTheDay,
   highlighted,
   workDays,
   offDays,
@@ -13,7 +14,7 @@ const ShiftDisplay = ({
   return (
     <div className={`outer ${highlighted ? "highlighted" : ""}`}>
       {workDays[day] === "1" || !isAcceptedShift ? (
-        shiftOfTheDay.map((shift, index) => {
+        scheduleOfTheDay.map((shift, index) => {
           const from = getStartingHours(index);
           const to = getFinishingHours(index);
           const style = {

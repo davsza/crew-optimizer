@@ -83,3 +83,7 @@ export const getFinishingHours = (index) => {
   const hours = [14, 18, 22];
   return hours[index];
 };
+
+export const getDefaultDays = () => {
+  return "0000000";
+};

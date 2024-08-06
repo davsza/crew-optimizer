@@ -6,7 +6,11 @@ import Dropdown from "../../components/Dropdown/Dropdown";
 import ModeDropdown from "../../components/ModeDropdown/ModeDropdown";
 import AdminShiftTable from "../../components/AdminShiftTable/AdminShiftTable";
 import "./Home.css";
-import { getCurrentWeek, getCurrentYear } from "../../constants";
+import {
+  getCurrentWeek,
+  getCurrentYear,
+  getDefaultDays,
+} from "../../constants";
 
 function Home() {
   const week = getCurrentWeek(0);
@@ -17,7 +21,7 @@ function Home() {
   const [finalShift, setFinalShift] = useState([]);
   const [appliedShift, setAppliedShift] = useState([]);
   const [allShifts, setAllShifts] = useState([]);
-  const [selectedOption, setSelectedOption] = useState("true");
+  const [selectedOption, setSelectedOption] = useState(true);
   const [selectedWeekForFinalShifts, setSelectedWeekForFinalShifts] =
     useState(week);
   const [selectedWeekForAppliedShifts, setSelectedWeekForAppliedShifts] =
@@ -74,7 +78,6 @@ function Home() {
       .then((res) => res.data)
       .then((data) => {
         setSuccessString(data);
-        console.log(data);
       })
       .catch((err) => console.log(err));
   };
@@ -105,7 +108,6 @@ function Home() {
 
   const handleDropdownChange = (value) => {
     const option = Boolean(value);
-    console.log(option);
     setSelectedOption(option);
   };
 
@@ -115,7 +117,6 @@ function Home() {
     const week = getCurrentWeek(2);
     const actualShift = "0".repeat(21);
     const currDateTime = new Date();
-    const isoDateTime = currDateTime.toISOString();
     const year = currDateTime.getFullYear();
 
     api
@@ -124,8 +125,9 @@ function Home() {
         year: year,
         applied_shift: application,
         actual_shift: actualShift,
-        application_last_modified: isoDateTime,
-        actual_last_modified: isoDateTime,
+        work_days: getDefaultDays(),
+        off_days: getDefaultDays(),
+        reserve_days: getDefaultDays(),
       })
       .then((res) => {
         if (res.status === 201) {
@@ -159,8 +161,8 @@ function Home() {
                 <p>No shift</p>
               ) : (
                 <ShiftPanel
-                  actualShift={finalShift}
-                  appliedShift={appliedShift}
+                  schedule={finalShift}
+                  appliedSchedule={appliedShift}
                 />
               )}
             </>
@@ -172,7 +174,10 @@ function Home() {
                 finalShifts={false}
                 onSelectWeek={handleSelectWeekForAppliedShifts}
               />
-              <AdminShiftTable shiftsData={allShifts} mode={selectedOption} />
+              <AdminShiftTable
+                shiftsData={allShifts}
+                isAcceptedShift={selectedOption}
+              />
               <button onClick={fetchSuccess}>Press me</button>
             </>
           )}

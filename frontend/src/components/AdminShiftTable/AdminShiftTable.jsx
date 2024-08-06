@@ -3,19 +3,18 @@ import api from "../../api";
 import ShiftDisplay from "../ShiftDisplay/ShiftDisplay";
 import "./AdminShiftTable.css";
 
-const RenderShifts = ({ isAcceptedShift, shift, day, user }) => {
+const RenderShifts = ({ isAcceptedShift, shift, day }) => {
   const currentShift = isAcceptedShift
-    ? shift.applied_shift
-    : shift.actual_shift;
+    ? shift.actual_shift
+    : shift.applied_shift;
   const shiftOfTheDay = currentShift.substring(day * 3, day * 3 + 3).split("");
   const workDays = shift.work_days;
   const offDays = shift.off_days;
   const reserveDays = shift.reserve_days;
-  console.log(user, isAcceptedShift, currentShift);
   return (
     <td key={day}>
       <ShiftDisplay
-        shiftOfTheDay={shiftOfTheDay}
+        scheduleOfTheDay={shiftOfTheDay}
         highlighted={false}
         workDays={workDays}
         offDays={offDays}
@@ -27,10 +26,8 @@ const RenderShifts = ({ isAcceptedShift, shift, day, user }) => {
   );
 };
 
-const AdminShiftTable = ({ shiftsData, mode }) => {
+const AdminShiftTable = ({ shiftsData, isAcceptedShift }) => {
   const [usernames, setUsernames] = useState({});
-
-  const isAcceptedShift = mode === "true" ? true : false;
 
   const fetchUserName = () => {
     api
