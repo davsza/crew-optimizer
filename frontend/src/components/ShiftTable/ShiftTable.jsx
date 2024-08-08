@@ -44,6 +44,9 @@ const ShiftTable = ({ shift, isAcceptedShift }) => {
           const shiftOfTheDay = currentShift
             .substring(day * 3, day * 3 + 3)
             .split("");
+          const appliedShiftOfTheDay = shift.applied_shift
+            .substring(day * 3, day * 3 + 3)
+            .split("");
           const workDays = shift.work_days;
           const offDays = shift.off_days;
           const reserveDays = shift.reserve_days;
@@ -64,6 +67,7 @@ const ShiftTable = ({ shift, isAcceptedShift }) => {
                   <div className="vertical-text">{formatDate(displayDate)}</div>
                   <ShiftDisplay
                     scheduleOfTheDay={shiftOfTheDay}
+                    appliedScheduleOfTheDay={appliedShiftOfTheDay}
                     highlighted={additionClass}
                     workDays={workDays}
                     offDays={offDays}

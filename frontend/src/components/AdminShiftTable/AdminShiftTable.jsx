@@ -8,6 +8,9 @@ const RenderShifts = ({ isAcceptedShift, shift, day }) => {
     ? shift.actual_shift
     : shift.applied_shift;
   const shiftOfTheDay = currentShift.substring(day * 3, day * 3 + 3).split("");
+  const appliedShiftOfTheDay = shift.applied_shift
+    .substring(day * 3, day * 3 + 3)
+    .split("");
   const workDays = shift.work_days;
   const offDays = shift.off_days;
   const reserveDays = shift.reserve_days;
@@ -15,6 +18,7 @@ const RenderShifts = ({ isAcceptedShift, shift, day }) => {
     <td key={day}>
       <ShiftDisplay
         scheduleOfTheDay={shiftOfTheDay}
+        appliedScheduleOfTheDay={appliedShiftOfTheDay}
         highlighted={false}
         workDays={workDays}
         offDays={offDays}

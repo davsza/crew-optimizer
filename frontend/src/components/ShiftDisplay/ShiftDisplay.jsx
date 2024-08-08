@@ -17,6 +17,7 @@ const ShiftDisplay = ({
         scheduleOfTheDay.map((shift, index) => {
           const from = getStartingHours(index);
           const to = getFinishingHours(index);
+          const appliedShift = appliedScheduleOfTheDay[index];
           const style = {
             color: shift === "1" ? "#ffffff" : "#007bff",
             backgroundColor: shift === "1" ? "#007bff" : "transparent",
@@ -25,7 +26,13 @@ const ShiftDisplay = ({
             width: `${((to - from) / 24) * 100}%`,
           };
           return (
-            <div key={index} className="inner" style={style}>
+            <div
+              key={index}
+              className={`inner ${
+                appliedShift === "1" && isAcceptedShift ? "application" : ""
+              }`}
+              style={style}
+            >
               {from} - {to}
             </div>
           );

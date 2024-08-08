@@ -29,7 +29,6 @@ function Home() {
   const [application, setApplication] = useState("");
   const [userGroup, setUserGroup] = useState("");
   const [userName, setUserName] = useState("");
-  const [successString, setSuccessString] = useState("");
 
   const getFinalShift = (week) => {
     api
@@ -73,13 +72,7 @@ function Home() {
   };
 
   const fetchSuccess = () => {
-    api
-      .get("/api/get-success-button/")
-      .then((res) => res.data)
-      .then((data) => {
-        setSuccessString(data);
-      })
-      .catch((err) => console.log(err));
+    api.get("/api/get-success-button/").catch((err) => console.log(err));
   };
 
   useEffect(() => {
@@ -157,7 +150,7 @@ function Home() {
                 finalShifts={false}
                 onSelectWeek={handleSelectWeekForAppliedShifts}
               />
-              {finalShift === undefined ? (
+              {finalShift === undefined || appliedShift === undefined ? (
                 <p>No shift</p>
               ) : (
                 <ShiftPanel
