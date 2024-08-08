@@ -1,4 +1,4 @@
-import { getStartingHours, getFinishingHours } from "../../constants";
+import { getShiftDisplayParameters } from "../../constants";
 import "./ShiftDisplay.css";
 
 const ShiftDisplay = ({
@@ -15,16 +15,11 @@ const ShiftDisplay = ({
     <div className={`outer ${highlighted ? "highlighted" : ""}`}>
       {workDays[day] === "1" || !isAcceptedShift ? (
         scheduleOfTheDay.map((shift, index) => {
-          const from = getStartingHours(index);
-          const to = getFinishingHours(index);
-          const appliedShift = appliedScheduleOfTheDay[index];
-          const style = {
-            color: shift === "1" ? "#ffffff" : "#007bff",
-            backgroundColor: shift === "1" ? "#007bff" : "transparent",
-            border: shift !== "1" ? "1px solid #007bff" : "none",
-            left: `${(from / 24) * 100}%`,
-            width: `${((to - from) / 24) * 100}%`,
-          };
+          const { from, to, appliedShift, style } = getShiftDisplayParameters(
+            shift,
+            index,
+            appliedScheduleOfTheDay
+          );
           return (
             <div
               key={index}

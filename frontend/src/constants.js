@@ -87,3 +87,27 @@ export const getFinishingHours = (index) => {
 export const getDefaultDays = () => {
   return "0000000";
 };
+
+export const getShiftDisplayParameters = (
+  shift,
+  index,
+  appliedScheduleOfTheDay
+) => {
+  const from = getStartingHours(index);
+  const to = getFinishingHours(index);
+  const appliedShift = appliedScheduleOfTheDay[index];
+  const style = {
+    color: shift === "1" ? "#ffffff" : "#007bff",
+    backgroundColor: shift === "1" ? "#007bff" : "transparent",
+    border: shift !== "1" ? "1px solid #007bff" : "none",
+    left: `${(from / 24) * 100}%`,
+    width: `${((to - from) / 24) * 100}%`,
+  };
+
+  return {
+    from,
+    to,
+    appliedShift,
+    style,
+  };
+};
