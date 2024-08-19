@@ -10,6 +10,7 @@ import {
   getCurrentWeek,
   getCurrentYear,
   getDefaultDays,
+  getBuiltInStrings,
 } from "../../constants";
 
 function Home() {
@@ -73,6 +74,7 @@ function Home() {
 
   const fetchSuccess = () => {
     api.get("/api/get-success-button/").catch((err) => console.log(err));
+    window.location.reload();
   };
 
   useEffect(() => {
@@ -151,7 +153,7 @@ function Home() {
                 onSelectWeek={handleSelectWeekForAppliedShifts}
               />
               {finalShift === undefined || appliedShift === undefined ? (
-                <p>No shift</p>
+                <p>{getBuiltInStrings.NO_SCHEDULE_TO_DISPLAY}</p>
               ) : (
                 <ShiftPanel
                   schedule={finalShift}
@@ -177,7 +179,7 @@ function Home() {
         </div>
         <div className="chat-container">
           <form className="chat-form" onSubmit={createAppliedShift}>
-            <label htmlFor="content">Application:</label>
+            <label htmlFor="content">{getBuiltInStrings.APPLICATION}:</label>
             <br />
             <textarea
               id="content"

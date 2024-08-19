@@ -6,8 +6,6 @@ from django.contrib.auth.models import User
 
 solver = pywraplp.Solver.CreateSolver('SCIP')
 
-print_result = True
-
 
 def solve():
 
@@ -163,62 +161,24 @@ def solve():
     # Solve the model
     status = solver.Solve()
 
-    days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-
-    def nl():
-        print()
-
-    def space(times):
-        print(' ' * times, end='')
-
     if status == pywraplp.Solver.OPTIMAL:
-        if print_result:
-            print("SHIFTS")
-            space(7)
-            for day in 2 * days:
-                print(day, '   ', end='')
-            nl()
         for w, user_id in zip(WORKERS, range(7, 22)):
-            if print_result:
-                print(f"{' ' if len(w) < 3 else ''}{w}: ", end=' ')
             shift_to_print = ""
             for s in SHIFT_INDEX_1_42:
-                if print_result:
-                    print(int(schedule[w, s].solution_value()), end=' ')
                 if s > 21:
                     shift_to_print += str(
                         int(schedule[w, s].solution_value()))
-                if print_result and s % 3 == 0:
-                    space(1)
+
             user = User.objects.filter(id=user_id).first()
             shift = Shift.objects.filter(
                 week=current_week_number, owner=user).first()
             shift.actual_shift = shift_to_print
             shift.save()
-            if print_result:
-                print(f'shift for {user.username}',
-                      shift.actual_shift, f'on week {shift.week}')
-                nl()
-        if print_result:
-            nl()
-            space(6)
-            for day in 2 * days:
-                print(day[0], end=' ')
-                if day == "Sun":
-                    space(1)
-            print()
         for w, user_id in zip(WORKERS, range(7, 22)):
-            if print_result:
-                print(f"{' ' if len(w) < 3 else ''}{w}: ", end=' ')
             work_days_str = ""
             off_days_str = ""
             reserve_days_str = ""
             for d in DAYS_INDEX_1_14:
-                if print_result:
-                    print('W' if int(workDays[w, d].solution_value()) == 1 else 'O' if int(
-                        offDays[w, d].solution_value()) == 1 else 'R', end=' ')
-                    if d == 7:
-                        space(1)
                 if d > 7:
                     work_days_str += str(int(workDays[w, d].solution_value()))
                     off_days_str += str(int(offDays[w, d].solution_value()))
@@ -231,7 +191,5 @@ def solve():
             shift.off_days = off_days_str
             shift.reserve_days = reserve_days_str
             shift.save()
-            if print_result:
-                nl()
     else:
         print('No solution found.')

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import api from "../../api";
 import ShiftDisplay from "../ShiftDisplay/ShiftDisplay";
 import "./AdminShiftTable.css";
+import { getAdminTableHeader } from "../../constants";
 
 const RenderShifts = ({ isAcceptedShift, shift, day }) => {
   const currentShift = isAcceptedShift
@@ -33,6 +34,8 @@ const RenderShifts = ({ isAcceptedShift, shift, day }) => {
 const AdminShiftTable = ({ shiftsData, isAcceptedShift }) => {
   const [usernames, setUsernames] = useState({});
 
+  const headers = getAdminTableHeader();
+
   const fetchUserName = () => {
     api
       .get(`/api/user/`)
@@ -56,20 +59,17 @@ const AdminShiftTable = ({ shiftsData, isAcceptedShift }) => {
       <table className="shift-table">
         <thead>
           <tr>
-            <th></th>
-            <th>Monday</th>
-            <th>Tuesday</th>
-            <th>Wednesday</th>
-            <th>Thursday</th>
-            <th>Friday</th>
-            <th>Saturday</th>
-            <th>Sunday</th>
+            {headers.map((header, index) => (
+              <th key={index}>{header}</th>
+            ))}
           </tr>
         </thead>
         <tbody>
           {shiftsData.map((shift, index) => (
             <tr key={index}>
-              <td>{getUsernameById(shift.owner)}</td>
+              <td className="username-container">
+                {getUsernameById(shift.owner)}
+              </td>
               {[0, 1, 2, 3, 4, 5, 6].map((dayIndex) => (
                 <RenderShifts
                   key={`${dayIndex}-${isAcceptedShift}`}

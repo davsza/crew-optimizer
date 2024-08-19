@@ -5,6 +5,7 @@ import {
   getStartDateOfWeek,
   getEndDateOfWeek,
   formatDate,
+  getBuiltInStrings,
 } from "../../constants";
 import "./Dropdown.css";
 
@@ -49,10 +50,10 @@ const Dropdown = ({ year, finalShifts, onSelectWeek }) => {
 
   return (
     <select value={selectedOption} onChange={handleChange} className="dropdown">
-      <option value="">Select a week</option>
+      <option value="">{getBuiltInStrings.SELECT_WEEK_STRING}</option>
       {options.map((option) => {
         const startDate = getStartDateOfWeek(year, option);
-        let endDate = getEndDateOfWeek(year, option);
+        const endDate = getEndDateOfWeek(year, option);
         return (
           <React.Fragment key={option}>
             <option value={option}>

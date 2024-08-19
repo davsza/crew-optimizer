@@ -1,5 +1,6 @@
 import { getShiftDisplayParameters } from "../../constants";
 import "./ShiftDisplay.css";
+import { getBuiltInStrings } from "../../constants";
 
 const ShiftDisplay = ({
   scheduleOfTheDay,
@@ -44,7 +45,7 @@ const ShiftDisplay = ({
             backgroundColor: "red",
           }}
         >
-          Day off
+          {getBuiltInStrings.DAY_OFF}
         </div>
       ) : reserveDays[day] === "1" ? (
         <div
@@ -58,10 +59,10 @@ const ShiftDisplay = ({
             backgroundColor: "green",
           }}
         >
-          Reserve
+          {getBuiltInStrings.RESERVE}
         </div>
       ) : (
-        <div>Something unexpexted happened</div>
+        <div>{getBuiltInStrings.NO_SCHEDULE_TO_DISPLAY}</div>
       )}
     </div>
   );

@@ -7,13 +7,16 @@ import {
   datePlusDays,
 } from "../../constants";
 import ShiftDisplay from "../ShiftDisplay/ShiftDisplay";
+import { getBuiltInStrings } from "../../constants";
 
 const ShiftTable = ({ shift, isAcceptedShift }) => {
   const currentShift = isAcceptedShift
     ? shift.actual_shift
     : shift.applied_shift;
 
-  const shiftLabel = isAcceptedShift ? "Schedule" : "Applied schedule";
+  const shiftLabel = isAcceptedShift
+    ? getBuiltInStrings.SCHEDULE
+    : getBuiltInStrings.APPLIED_SCHEDULE;
 
   if (
     !currentShift ||

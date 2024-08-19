@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "./ModeDropdown.css";
+import { getBuiltInStrings } from "../../constants";
 
 const ModeDropdown = ({ onChange }) => {
   const [selectedValue, setSelectedValue] = useState("true");
@@ -16,8 +17,8 @@ const ModeDropdown = ({ onChange }) => {
       onChange={handleChange}
       className="modedropdown"
     >
-      <option value="true">Schedule</option>
-      <option value="">Applied schedule</option>
+      <option value="true">{getBuiltInStrings.SCHEDULE}</option>
+      <option value="">{getBuiltInStrings.APPLIED_SCHEDULE}</option>
     </select>
   );
 };

@@ -111,3 +111,26 @@ export const getShiftDisplayParameters = (
     style,
   };
 };
+
+export const getAdminTableHeader = () => {
+  return [
+    "Username",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+  ];
+};
+
+export const getBuiltInStrings = {
+  SELECT_WEEK_STRING: "Select a week",
+  SCHEDULE: "Schedule",
+  APPLIED_SCHEDULE: "Applied schedule",
+  DAY_OFF: "Day off",
+  RESERVE: "Reserve",
+  NO_SCHEDULE_TO_DISPLAY: "No schedule yet to display",
+  APPLICATION: "Application",
+};

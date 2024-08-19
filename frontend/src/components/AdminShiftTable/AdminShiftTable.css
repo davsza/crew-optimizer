@@ -1,6 +1,6 @@
 .table-container {
-  justify-content: center;
   display: flex;
+  justify-content: center;
   overflow-y: auto;
   height: 100%;
   width: 100%;
@@ -9,4 +9,11 @@
 .shift-table {
   width: 100%;
   table-layout: fixed;
+}
+
+.username-container {
+  background-color: #e5e5e5;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: bold;
 }
