@@ -131,6 +131,18 @@ export const getBuiltInStrings = {
   APPLIED_SCHEDULE: "Applied schedule",
   DAY_OFF: "Day off",
   RESERVE: "Reserve",
-  NO_SCHEDULE_TO_DISPLAY: "No schedule yet to display",
-  APPLICATION: "Application",
+  NO_SCHEDULE_TO_DISPLAY: "No schedule to display",
+  GENERATE_SHIFTS: "Generate shifts",
 };
+
+export const formatTimestampToFormattedTime = (timestamp) => {
+  const date = new Date(timestamp);
+
+  let hours = date.getHours();
+  let minutes = date.getMinutes();
+
+  hours = hours < 10 ? '0' + hours : hours;
+  minutes = minutes < 10 ? '0' + minutes : minutes;
+
+  return `${hours}:${minutes}`;
+}

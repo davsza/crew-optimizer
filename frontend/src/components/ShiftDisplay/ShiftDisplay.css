@@ -13,10 +13,6 @@
   transition: transform 0.3s ease, width 0.3s ease, height 0.3s ease;
 }
 
-.outer:hover {
-  transform: scale(1.03);
-}
-
 .inner {
   color: #ffffff;
   border-radius: 10px;

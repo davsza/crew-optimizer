@@ -2,48 +2,6 @@ div {
   font-family: Arial, sans-serif;
 }
 
-form {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-form h2 {
-  color: #333;
-  font-size: 24px;
-  margin-bottom: 20px;
-}
-
-form label {
-  font-weight: bold;
-  margin-top: 10px;
-}
-
-form input,
-form textarea {
-  width: 100%;
-  padding: 8px;
-  margin: 8px 0 16px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-sizing: border-box;
-}
-
-form input[type="submit"] {
-  background-color: #007bff;
-  color: white;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-form input[type="submit"]:hover {
-  background-color: #0056b3;
-}
-
 .container {
   display: flex;
   height: 90vh;
@@ -55,10 +13,68 @@ form input[type="submit"]:hover {
   height: 90%;
 }
 
-.chat-container {
-  flex: 1;
-}
-
 .schedule-container {
   flex: 2;
+  position: relative;
+  border: 2px solid #007bff;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.dropdown-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 5%;
+  padding-top: 5px;
+  padding-bottom: 15px;
+}
+
+.table-container {
+  height: 95%;
+  box-sizing: border-box;
+}
+
+.chat-container {
+  position: relative;
+  flex: 1;
+  border: 2px solid #007bff;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.chat-area {
+  height: 80%;
+  overflow-y: auto;
+  flex-direction: column-reverse;
+  display: flex;
+}
+
+.chat-form {
+  height: 20%;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-input {
+  width: 90%;
+  height: 30%;
+}
+
+.chat-input-button {
+  width: 90%;
+  cursor: pointer;
+  background-color: #007bff;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.chat-input-button:hover {
+  background-color: #0056b3;
 }

@@ -2,9 +2,9 @@ from django.shortcuts import render
 from django.contrib.auth.models import User, Group
 from rest_framework import generics
 from rest_framework.views import APIView
-from .serializers import UserSerializer, ShiftSerializer
+from .serializers import UserSerializer, ShiftSerializer, MessageSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Shift
+from .models import Shift, Message
 from django.http import JsonResponse
 from .solver import solve
 
@@ -39,6 +39,18 @@ class ShiftLastWeeksQuery(generics.ListAPIView):
         return Shift.objects.filter(owner=user, week__lte=week)
 
 
+class MessageListCreate(generics.ListCreateAPIView):
+    serializer_class = MessageSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return Message.objects.filter(owner=user).order_by('-id')
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+
 class ShiftListCreate(generics.ListCreateAPIView):
     serializer_class = ShiftSerializer
     permission_classes = [IsAuthenticated]
@@ -46,15 +58,6 @@ class ShiftListCreate(generics.ListCreateAPIView):
     def get_queryset(self):
         user = self.request.user
         return Shift.objects.filter(owner=user)
-
-    def perform_create(self, serializer):
-        week_number = serializer.validated_data.get('week')
-        existing_shift = Shift.objects.filter(
-            owner=self.request.user, week=week_number).first()
-        if existing_shift:
-            serializer.update(existing_shift, serializer.validated_data)
-        else:
-            serializer.save(owner=self.request.user)
 
 
 class ShiftDelete(generics.DestroyAPIView):

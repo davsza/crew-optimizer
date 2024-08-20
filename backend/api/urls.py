@@ -3,7 +3,7 @@ from . import views
 
 
 urlpatterns = [
-    path('shifts/', views.ShiftListCreate.as_view(), name="shifts"),
+    path('message/', views.MessageListCreate.as_view(), name="message"),
     path('shifts/<int:week>', views.ShiftGivenWeekQuery.as_view(), name="shifts"),
     path('shifts/lastweeks/<int:week>',
          views.ShiftLastWeeksQuery.as_view(), name="shifts"),

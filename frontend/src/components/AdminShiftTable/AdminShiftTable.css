@@ -11,6 +11,14 @@
   table-layout: fixed;
 }
 
+.shift-table thead th {
+  position: sticky;
+  top: 0;
+  background-color: #b3b3b3;
+  z-index: 1;
+  border-radius: 5px;
+}
+
 .username-container {
   background-color: #e5e5e5;
   border-radius: 10px;

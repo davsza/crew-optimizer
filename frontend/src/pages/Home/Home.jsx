@@ -5,12 +5,13 @@ import Header from "../../components/Header/Header";
 import Dropdown from "../../components/Dropdown/Dropdown";
 import ModeDropdown from "../../components/ModeDropdown/ModeDropdown";
 import AdminShiftTable from "../../components/AdminShiftTable/AdminShiftTable";
+import Message from "../../components/Message/Message";
 import "./Home.css";
 import {
   getCurrentWeek,
   getCurrentYear,
-  getDefaultDays,
   getBuiltInStrings,
+  getAdminTableHeader,
 } from "../../constants";
 
 function Home() {
@@ -27,9 +28,10 @@ function Home() {
     useState(week);
   const [selectedWeekForAppliedShifts, setSelectedWeekForAppliedShifts] =
     useState(appliedShiftWeek);
-  const [application, setApplication] = useState("");
+  const [message, setMessage] = useState("");
   const [userGroup, setUserGroup] = useState("");
   const [userName, setUserName] = useState("");
+  const [messages, setMessages] = useState([]);
 
   const getFinalShift = (week) => {
     api
@@ -47,6 +49,16 @@ function Home() {
       .then((res) => res.data)
       .then((data) => {
         setAppliedShift(data[0]);
+      })
+      .catch((err) => alert(err));
+  };
+
+  const getMessages = () => {
+    api
+      .get("/api/message/")
+      .then((res) => res.data)
+      .then((data) => {
+        setMessages(data);
       })
       .catch((err) => alert(err));
   };
@@ -82,6 +94,7 @@ function Home() {
     getAppliedShift(appliedShiftWeek);
     getAllShifts(week);
     fetchUserDate();
+    getMessages();
   }, []);
 
   useEffect(() => {
@@ -106,31 +119,24 @@ function Home() {
     setSelectedOption(option);
   };
 
-  const createAppliedShift = (e) => {
+  const createMessage = (e) => {
     e.preventDefault();
 
-    const week = getCurrentWeek(2);
-    const actualShift = "0".repeat(21);
     const currDateTime = new Date();
-    const year = currDateTime.getFullYear();
 
     api
-      .post("/api/shifts/", {
-        week: week,
-        year: year,
-        applied_shift: application,
-        actual_shift: actualShift,
-        work_days: getDefaultDays(),
-        off_days: getDefaultDays(),
-        reserve_days: getDefaultDays(),
+      .post("/api/message/", {
+        text: message,
+        date: currDateTime,
+        sent_by_user: true,
       })
       .then((res) => {
         if (res.status === 201) {
-          console.log("Shift created");
+          console.log("Message created");
         } else {
           console.log("Failed to make a shift");
         }
-        getAppliedShift(appliedShiftWeek);
+        getMessages();
       })
       .catch((err) => alert(err));
   };
@@ -138,58 +144,81 @@ function Home() {
   return (
     <div>
       <Header userName={userName}></Header>
+      <button onClick={fetchSuccess} hidden="true">
+        {getBuiltInStrings.GENERATE_SHIFTS}
+      </button>
       <div className="container">
         <div className="schedule-container">
           {userGroup !== "Supervisor" ? (
             <>
-              <Dropdown
-                year={year}
-                finalShifts={true}
-                onSelectWeek={handleSelectWeekForFinalShifts}
-              />
-              <Dropdown
-                year={year}
-                finalShifts={false}
-                onSelectWeek={handleSelectWeekForAppliedShifts}
-              />
+              <div className="dropdown-container">
+                <Dropdown
+                  year={year}
+                  finalShifts={true}
+                  onSelectWeek={handleSelectWeekForFinalShifts}
+                />
+                <Dropdown
+                  year={year}
+                  finalShifts={false}
+                  onSelectWeek={handleSelectWeekForAppliedShifts}
+                />
+              </div>
               {finalShift === undefined || appliedShift === undefined ? (
                 <p>{getBuiltInStrings.NO_SCHEDULE_TO_DISPLAY}</p>
               ) : (
-                <ShiftPanel
-                  schedule={finalShift}
-                  appliedSchedule={appliedShift}
-                />
+                <div className="table-container">
+                  <ShiftPanel
+                    schedule={finalShift}
+                    appliedSchedule={appliedShift}
+                  />
+                </div>
               )}
             </>
           ) : (
             <>
-              <ModeDropdown onChange={handleDropdownChange} />
-              <Dropdown
-                year={year}
-                finalShifts={false}
-                onSelectWeek={handleSelectWeekForAppliedShifts}
-              />
-              <AdminShiftTable
-                shiftsData={allShifts}
-                isAcceptedShift={selectedOption}
-              />
-              <button onClick={fetchSuccess}>Press me</button>
+              <div className="dropdown-container">
+                <ModeDropdown onChange={handleDropdownChange} />
+                <Dropdown
+                  year={year}
+                  finalShifts={false}
+                  onSelectWeek={handleSelectWeekForAppliedShifts}
+                />
+              </div>
+              <div className="table-container">
+                <AdminShiftTable
+                  shiftsData={allShifts}
+                  isAcceptedShift={selectedOption}
+                />
+              </div>
             </>
           )}
         </div>
         <div className="chat-container">
-          <form className="chat-form" onSubmit={createAppliedShift}>
-            <label htmlFor="content">{getBuiltInStrings.APPLICATION}:</label>
-            <br />
+          <div className="chat-area">
+            {messages.map((message, index) => (
+              <Message
+                text={message.text}
+                date={message.date}
+                isSentByUser={message.sent_by_user}
+                index={index}
+              ></Message>
+            ))}
+          </div>
+          <form className="chat-form" onSubmit={createMessage}>
             <textarea
+              className="chat-input"
               id="content"
               name="content"
               required
-              value={application}
-              onChange={(e) => setApplication(e.target.value)}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
             ></textarea>
             <br />
-            <input type="submit" value="Submit"></input>
+            <input
+              className="chat-input-button"
+              type="submit"
+              value="Submit request"
+            ></input>
           </form>
         </div>
       </div>
