@@ -125,14 +125,14 @@ function Home() {
     const currDateTime = new Date();
 
     api
-      .post("/api/message/", {
+      .post("/api/agent/", {
         text: message,
         date: currDateTime,
         sent_by_user: true,
       })
       .then((res) => {
         if (res.status === 201) {
-          console.log("Message created");
+          console.log("Message sent");
         } else {
           console.log("Failed to make a shift");
         }
@@ -144,7 +144,7 @@ function Home() {
   return (
     <div>
       <Header userName={userName}></Header>
-      <button onClick={fetchSuccess} hidden="true">
+      <button onClick={fetchSuccess}>
         {getBuiltInStrings.GENERATE_SHIFTS}
       </button>
       <div className="container">

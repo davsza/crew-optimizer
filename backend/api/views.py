@@ -6,7 +6,7 @@ from .serializers import UserSerializer, ShiftSerializer, MessageSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import Shift, Message
 from django.http import JsonResponse
-from .solver import solve
+from .agent import call_agent
 
 
 class ShiftGivenWeekQuery(generics.ListAPIView):
@@ -102,6 +102,8 @@ def get_user_details(request):
     return JsonResponse(user_dict)
 
 
-def get_success_button(request):
-    result = {"result": solve()}
-    return JsonResponse(result)
+
+class AgentView(APIView):
+    def post(self, request):
+        call_agent(request)
+        return JsonResponse({"a": "b"})

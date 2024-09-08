@@ -13,6 +13,6 @@ urlpatterns = [
     path('get-shifts-admin/<int:week>',
          views.ShiftGivenWeekQueryAdmin.as_view(), name="get-shifts-admin"),
     path('user/', views.get_user_details, name="user"),
-    path('get-success-button/', views.get_success_button, name="success"),
+    path('agent/', views.AgentView.as_view(), name="success"),
 
 ]
