@@ -5,13 +5,7 @@ NUMBER_OF_DAYS = 7
 MESSAGE_MAX_LENGTH = 1024
 
 INIT_MSG_FOR_AGENT = """You are an AI assistant that can provide helpful answers using available tools. You will have to explain the user's upcoming week's applied schedule and modify it if needed.
-                        \nIf you are unable to answer, you can use the following tools:
-                            'Application getter',
-                            'Application converter',
-                            'Json converter',
-                            'Application saver',
-                            'Get current date/time',
-                            'Get week number for application week',
+                        \nIf you are unable to answer, you can use the following tools: 'Application getter', 'Application converter', 'Json converter', 'Application saver', 'Get current date/time', 'Get week number for application week',
                         You don't have to use them, if it's not mandatory"""
 
 APPLICATION_GETTER_DESCRIPTION = """Useful when you need to retrieve an application from the database for the user. It's going to be a 21-character long string containing 0 and 1 values.
@@ -19,10 +13,13 @@ APPLICATION_GETTER_DESCRIPTION = """Useful when you need to retrieve an applicat
                                     \nNo input is required as it uses global variables."""
 
 APPLICATION_CONVERTER_DESCRIPTION = """Useful when you need to convert an application string into a json for better understanding. Call this function with the return value of the 'Application getter' tool.
-                                       \nPlease list the days after each other followed by the applications. Example: 'Monday morning and night, Wednesday afternoon, Friday all 3 shifts, etc.'"""
+                                       \nIf the user asks, please list availability of the user according to the application by the JSON. Example: 'Monday morning and night, Wednesday afternoon, Friday all 3 shifts, etc.'
+                                       \nIf they want to modify their application, first convert it into JSON and then change the values according the request.
+                                       \nAlways pass an application string to this function."""
 
 JSON_CONVERTER_DESCRIPTION = """Useful when you need to convert an application json file into a string for saving into the database.
-                                \nWhen the user requests to modify their application JSON, and they are finished with it, pass the modified JSON to this function which will convert it back to the string format for saving it into the database."""
+                                \nWhen the user requests to modify their application JSON, and they are finished with it, pass the modified JSON to this function which will convert it back to the string format for saving it into the database.
+                                \nAlways pass an application JSON to this function."""
 
 APPLICATION_SAVER_DESCRIPTION = """Userful when you need to save a modified application.
                                    \nYou should only save a modified application once the user asked for it and finalized modifying the applicaiton."""
