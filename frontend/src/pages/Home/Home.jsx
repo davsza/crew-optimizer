@@ -137,8 +137,11 @@ function Home() {
           console.log("Failed to make a shift");
         }
         getMessages();
+        getAppliedShift(appliedShiftWeek);
       })
       .catch((err) => alert(err));
+
+    setMessage("");
   };
 
   return (

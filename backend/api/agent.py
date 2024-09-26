@@ -4,12 +4,12 @@ from langchain.agents import AgentExecutor, create_structured_chat_agent
 from langchain.memory import ConversationBufferMemory
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
-from .models import Shift, Message
+from .models import Message
 import json
-from pydantic import BaseModel, constr, validator
-from typing import Dict
+from pydantic import BaseModel
 from langchain.tools import StructuredTool
-from .constants import INIT_MSG_FOR_AGENT, APPLICATION_GETTER_DESCRIPTION, APPLICATION_CONVERTER_DESCRIPTION, JSON_CONVERTER_DESCRIPTION, APPLICATION_SAVER_DESCRIPTION, GET_CURRENT_DATETIME_DESCRIPTION, GET_WEEKNUMBER_DESCRIPTION
+from .constants import INIT_MSG_FOR_AGENT, SUMMARIZATION_DESC, GET_CURRENT_DATETIME_DESCRIPTION, GET_WEEKNUMBER_DESCRIPTION, GET_APPLICATION_CHANGE_DESCRIPTION, GET_SAVE_APPLICATION_MODIFICATION_DESCRIPTION, GET_DROP_MODIFICATION_DESCRIPTION, GET_CURRENT_MODIFICATION_DESCRIPTION
+from .functions import get_current_week, get_past_messages, is_empty_application_string, get_default_application_string, convert_string_to_json, convert_json_to_string, get_summary, order_json_by_days, get_shift, complement_shifts, overwrite_binary
 
 
 load_dotenv()
@@ -18,94 +18,38 @@ user = None
 week = -1
 
 
-def get_past_messages(user):
-    messages = Message.objects.filter(owner=user)
-    return messages
+class ShiftUpdateInputSchema(BaseModel):
+    user_input: str
 
 
-def is_binary_string(schedule_string):
-    return all(char in {'0', '1'} for char in schedule_string)
+class ShiftUpdateOutputSchema(BaseModel):
+    agent_output: str
 
 
-class ApplicationStringInput(BaseModel):
-    application_string: constr(min_length=21, max_length=21)
-
-    @validator("application_string")
-    def check_binary_string(cls, value):
-        if not all(char in '01' for char in value):
-            raise ValueError("The string must contain only '0' and '1'.")
-        return value
-
-
-def convert_string_to_json(application_string: str) -> str:
-    print('convert_string_to_json', application_string)
-    days = ["monday", "tuesday", "wednesday",
-            "thursday", "friday", "saturday", "sunday"]
-    schedule = {}
-    for i, day in enumerate(days):
-        start_index = i * 3
-        schedule[day] = {
-            "morning": True if application_string[start_index] == "1" else False,
-            "afternoon": True if application_string[start_index + 1] == "1" else False,
-            "night": True if application_string[start_index + 2] == "1" else False
-        }
-
-    print('####', {"shift": schedule}, "####")
-
-    return json.dumps({"shift": schedule}, indent=4)
+def save_shift():
+    shift = get_shift(user, week)
+    if is_empty_application_string(shift.modification):
+        return f"You don't have any ongoing modifications, nothing to save!"
+    else:
+        shift.applied_shift = overwrite_binary(
+            shift.modification, shift.applied_shift)
+        shift.modification = get_default_application_string()
+        shift.save()
+        return "You successfully saved your application. If you have any questions or want to modify it feel free to ask!"
 
 
-class ShiftDaySchema(BaseModel):
-    morning: bool = False
-    afternoon: bool = False
-    night: bool = False
-
-
-class ShiftSchema(BaseModel):
-    monday: ShiftDaySchema
-    tuesday: ShiftDaySchema
-    wednesday: ShiftDaySchema
-    thursday: ShiftDaySchema
-    friday: ShiftDaySchema
-    saturday: ShiftDaySchema
-    sunday: ShiftDaySchema
-
-    @validator("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
-    def validate_day(cls, value):
-        return value
-
-
-def convert_json_to_string(shift_json: Dict[str, Dict[str, bool]]) -> str:
-    days = ["monday", "tuesday", "wednesday",
-            "thursday", "friday", "saturday", "sunday"]
-    values_string = ""
-
-    for day in days:
-        shifts = shift_json["shift"].get(day, {})
-        values_string += f"{shifts.get('morning', False)}{shifts.get('afternoon', False)}{shifts.get('night', False)}"
-
-    return values_string
-
-
-def get_shift():
-    shift = Shift.objects.get(owner=user, week=week)
-    return shift.applied_shift
-
-
-def save_shift(application_string: str) -> str:
-    shift = Shift.objects.get(owner=user, week=week)
-    shift.applied_shift = application_string
-    shift.save()
+def drop_modification():
+    shift = get_shift(user, week)
+    if is_empty_application_string(shift.modification):
+        return f"You don't have any ongoing modifications, nothing to drop!"
+    else:
+        shift.modification = get_default_application_string()
+        shift.save()
+        return "You successfully dropped your ongoing modifications. If you have any questions or want to modify it feel free to ask!"
 
 
 def get_week_number_for_application():
-    import datetime
-
-    today = datetime.date.today()
-    start_of_current_week = today - datetime.timedelta(days=today.weekday())
-    start_of_next_week = start_of_current_week + datetime.timedelta(weeks=2)
-    _, next_next_week, _ = start_of_next_week.isocalendar()
-    return next_next_week
+    return get_current_week(2)
 
 
 def get_current_date_time():
@@ -115,29 +59,89 @@ def get_current_date_time():
     return current_date
 
 
-tools = [
+def get_application_summarization():
+    shift = get_shift(user, week)
+    application = shift.applied_shift
+    application_json = convert_string_to_json(application)
+    summary = get_summary(application_json)
+    return summary
+
+
+def get_modification_summarization():
+    shift = get_shift(user, week)
+    modification = shift.modification
+    modification_json_raw = convert_string_to_json(modification)
+    modification_json = json.loads(modification_json_raw)
+    summary = get_summary(None, None, modification_json)
+    return summary
+
+
+def change_schedule(user_request: str) -> ShiftUpdateOutputSchema:
+    shift = get_shift(user, week)
+    binary_application = shift.applied_shift
+    application_json_raw = convert_string_to_json(binary_application)
+    application_json = json.loads(application_json_raw)
+    # if there was any, something like "xx11x0xxxxxxxxx0xx1xx", "xxxxxxxxxxxxxxxxxxxxx" otherwise
+    binary_modification = shift.modification
+
+    input_data = {"question": user_request}
+    response = agent_executor_converter.invoke(input_data)
+    change_request = response["output"]
+    change_request = order_json_by_days(change_request)  # order by day
+
+    change_request_json = json.dumps(
+        {"shift": change_request}, indent=4)
+
+    full_change_request_json = complement_shifts(
+        change_request_json)  # true, false, null json
+
+    binary_change_request = convert_json_to_string(
+        full_change_request_json, True)
+
+    binary_modification = overwrite_binary(
+        binary_change_request, binary_modification)
+
+    current_modification_json_raw = convert_string_to_json(
+        binary_change_request)
+    current_modification_json = json.loads(current_modification_json_raw)
+
+    full_modification_json_raw = convert_string_to_json(binary_modification)
+    full_modification_json = json.loads(full_modification_json_raw)
+
+    shift.modification = binary_modification
+    shift.save()
+
+    summary = get_summary(
+        application_json, current_modification_json, full_modification_json)
+    return ShiftUpdateOutputSchema(agent_output=summary)
+
+
+main_tools = [
     StructuredTool.from_function(
-        func=get_shift,
-        name="Application getter",
-        description=APPLICATION_GETTER_DESCRIPTION,
+        func=get_application_summarization,
+        name="Application summarization",
+        description=SUMMARIZATION_DESC,
     ),
     StructuredTool.from_function(
-        func=convert_string_to_json,
-        name="Application converter",
-        description=APPLICATION_CONVERTER_DESCRIPTION,
-        input_schema=ApplicationStringInput,
+        func=change_schedule,
+        name="Modification",
+        description=GET_APPLICATION_CHANGE_DESCRIPTION,
+        input_schema=ShiftUpdateInputSchema
     ),
     StructuredTool.from_function(
-        func=convert_json_to_string,
-        name="Json converter",
-        description=JSON_CONVERTER_DESCRIPTION,
-        input_schema=ShiftSchema,
+        func=get_modification_summarization,
+        name="Current modification",
+        description=GET_CURRENT_MODIFICATION_DESCRIPTION,
+    ),
+    StructuredTool.from_function(
+        func=drop_modification,
+        name="Drop ongoing modification",
+        description=GET_DROP_MODIFICATION_DESCRIPTION,
     ),
     StructuredTool.from_function(
         func=save_shift,
-        name="Application saver",
-        description=APPLICATION_SAVER_DESCRIPTION,
-        input_schema=ApplicationStringInput,
+        name="Application saving",
+        description=GET_SAVE_APPLICATION_MODIFICATION_DESCRIPTION,
     ),
     StructuredTool.from_function(
         func=get_week_number_for_application,
@@ -148,13 +152,29 @@ tools = [
         func=get_current_date_time,
         name="Get current date/time",
         description=GET_CURRENT_DATETIME_DESCRIPTION,
-    )
+    ),
+
 ]
 
-prompt = hub.pull("davsza/crew-optimizer")
+converter_tools = []
 
-llm = ChatOpenAI(model="gpt-4o-mini")
-agent = create_structured_chat_agent(llm=llm, tools=tools, prompt=prompt)
+main_prompt = hub.pull("davsza/crew-optimizer")
+converter_prompt = hub.pull("davsza/crew-optimizer-converter")
+
+llm = ChatOpenAI(model="gpt-4o-2024-08-06", temperature=0)
+main_agent = create_structured_chat_agent(
+    llm=llm, tools=main_tools, prompt=main_prompt)
+converter_agent = create_structured_chat_agent(
+    llm=llm, tools=converter_tools, prompt=converter_prompt)
+
+
+agent_executor_converter = AgentExecutor.from_agent_and_tools(
+    agent=converter_agent,
+    tools=converter_tools,
+    verbose=True,
+    handle_parsing_errors=True,
+    max_iterations=3,
+)
 
 
 def call_agent(request):
@@ -167,7 +187,7 @@ def call_agent(request):
 
     message = request.data.get('text')
     user = request.user
-    week = get_week_number_for_application()
+    week = get_current_week(2)
 
     msg = Message(text=message, sent_by_user=True,
                   date=request.data.get('date'), owner=user)
@@ -177,11 +197,12 @@ def call_agent(request):
         memory_key="chat_history", return_messages=True)
 
     agent_executor = AgentExecutor.from_agent_and_tools(
-        agent=agent,
-        tools=tools,
+        agent=main_agent,
+        tools=main_tools,
         verbose=True,
         memory=memory,
-        handle_parsing_errors=True
+        handle_parsing_errors=True,
+        max_iterations=5,
     )
 
     initial_message = INIT_MSG_FOR_AGENT
@@ -197,7 +218,7 @@ def call_agent(request):
     input_data = {"question": message}
     response = agent_executor.invoke(input_data)
     print("Bot:", response["output"])
-    print(response)
+    print('Response:', response)
 
     memory.chat_memory.add_message(AIMessage(content=response["output"]))
 

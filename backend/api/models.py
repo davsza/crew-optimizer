@@ -8,6 +8,7 @@ class Shift(models.Model):
     year = models.IntegerField()
     applied_shift = models.CharField(max_length=NUMBER_OF_SHIFTS)
     actual_shift = models.CharField(max_length=NUMBER_OF_SHIFTS)
+    modification = models.CharField(max_length=NUMBER_OF_SHIFTS)
     work_days = models.CharField(max_length=NUMBER_OF_DAYS)
     off_days = models.CharField(max_length=NUMBER_OF_DAYS)
     reserve_days = models.CharField(max_length=NUMBER_OF_DAYS)
