@@ -1,7 +1,6 @@
 import datetime
-from .models import Shift
 from django.contrib.auth.models import User, Group
-from api.models import Message
+from api.models import Message, Shift
 from django.db.models.query import QuerySet
 import json
 
@@ -13,6 +12,11 @@ def get_current_week(additional_week: int) -> int:
     return current_week_number + additional_week
 
 
+def is_weekend() -> bool:
+    today = datetime.datetime.now()
+    return today.weekday() >= 5
+
+
 def get_supervisor_group() -> Group:
     return Group.objects.get(name='Supervisor')
 
@@ -22,8 +26,12 @@ def get_admin_users() -> QuerySet[User]:
     return User.objects.filter(groups=group)
 
 
+def user_in_group(user, group_name):
+    return user.groups.filter(name=group_name).exists()
+
+
 def get_shifts_by_week(week_number: int) -> QuerySet[Shift]:
-    admin_users = -get_admin_users()
+    admin_users = get_admin_users()
     shifts = Shift.objects.exclude(
         owner__in=admin_users).filter(week=week_number)
     return shifts
@@ -34,12 +42,12 @@ def get_past_messages(user):
     return messages
 
 
-def is_empty_application_string(application_string):
-    return all(char == 'x' for char in application_string)
+def is_empty_application_string(application_string, empty_character):
+    return all(char == empty_character for char in application_string)
 
 
-def get_default_application_string():
-    return 'x' * 21
+def get_default_application_string(empty_character):
+    return empty_character * 21
 
 
 def convert_string_to_json(application_string):
@@ -147,10 +155,10 @@ def get_summary(application, current_modification=None, full_modification=None):
                     full_modification_application_summary_result) + "; and cancellations are " + ', '.join(full_modification_cancellation_summary_result) + ". Would you like to modify it any further, or save them?"
             elif current_modification_application_summary_result:
                 ret_val = "You have applied for: " + ', '.join(current_modification_application_summary_result) + \
-                    ". With that, your ongoing applications are " + \
+                    ". With that, your ongoing applications are: " + \
                     ', '.join(full_modification_application_summary_result)
                 if full_modification_cancellation_summary_result:
-                    ret_val += "; and cancellations are " + \
+                    ret_val += "; and cancellations are: " + \
                         ', '.join(
                             full_modification_cancellation_summary_result)
                 ret_val += ". Would you like to modify it any further, or save them?"
@@ -159,22 +167,22 @@ def get_summary(application, current_modification=None, full_modification=None):
                     ', '.join(current_modification_cancellation_summary_result) + \
                     ". With that, your ongoing "
                 if full_modification_application_summary_result:
-                    ret_val += "applications are " + \
+                    ret_val += "applications are: " + \
                         ', '.join(
                             full_modification_application_summary_result) + "; and "
-                ret_val += "cancellations are " + \
+                ret_val += "cancellations are: " + \
                     ', '.join(full_modification_cancellation_summary_result) + \
                     ". Would you like to modify it any further, or save them?"
         else:
             if full_modification_application_summary_result:
-                ret_val = "Your ongoing applications are " + ', '.join(
+                ret_val = "Your ongoing applications are: " + ', '.join(
                     full_modification_application_summary_result)
                 if full_modification_cancellation_summary_result:
-                    ret_val += "; and cancellations are " + \
+                    ret_val += "; and cancellations are: " + \
                         ', '.join(
                             full_modification_cancellation_summary_result) + ". Would you like to modify it any further, or save them?"
             elif full_modification_cancellation_summary_result:
-                ret_val = "Your ongoing cancellations are " + ', '.join(
+                ret_val = "Your ongoing cancellations are: " + ', '.join(
                     full_modification_cancellation_summary_result) + ". Would you like to modify it any further, or save them?"
             else:
                 ret_val = "You don't have any ongoing modifications. If you'd like to change anything, please let me know!"
@@ -230,3 +238,20 @@ def overwrite_binary(str1, str2):
             application_summary_result += str2[i]
 
     return application_summary_result
+
+
+def get_users_without_application():
+    supervisor_group = Group.objects.get(name='Supervisor')
+    users = User.objects.exclude(groups=supervisor_group)
+    user_list = []
+    week_number = get_current_week(2)
+    for user in users:
+        shift = Shift.objects.get(owner=user, week=week_number)
+        application = shift.applied_shift
+        if is_empty_application_string(application, '0'):
+            user_list.append(user.username)
+    return (True, (f"Warning! The following users don't have any application: {', '.join(user_list)}" if len(user_list) > 1 else f"The following user doesn't have any application: {user_list[0]}")) if user_list else (False,)
+
+
+def user_in_group(user, group_name):
+    return user.groups.filter(name=group_name).exists()

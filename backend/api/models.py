@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from .constants import NUMBER_OF_DAYS, NUMBER_OF_SHIFTS, MESSAGE_MAX_LENGTH
+from .utils.constants import NUMBER_OF_DAYS, NUMBER_OF_SHIFTS, MESSAGE_MAX_LENGTH
 
 
 class Shift(models.Model):

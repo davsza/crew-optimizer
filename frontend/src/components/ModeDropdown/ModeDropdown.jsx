@@ -18,7 +18,7 @@ const ModeDropdown = ({ onChange }) => {
       className="modedropdown"
     >
       <option value="true">{getBuiltInStrings.SCHEDULE}</option>
-      <option value="">{getBuiltInStrings.APPLIED_SCHEDULE}</option>
+      <option value="">{getBuiltInStrings.APPLICATION}</option>
     </select>
   );
 };

@@ -138,6 +138,7 @@ function Home() {
         }
         getMessages();
         getAppliedShift(appliedShiftWeek);
+        getAllShifts(appliedShiftWeek);
       })
       .catch((err) => alert(err));
 

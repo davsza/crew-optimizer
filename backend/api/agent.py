@@ -8,9 +8,9 @@ from .models import Message
 import json
 from pydantic import BaseModel
 from langchain.tools import StructuredTool
-from .constants import INIT_MSG_FOR_AGENT, SUMMARIZATION_DESC, GET_CURRENT_DATETIME_DESCRIPTION, GET_WEEKNUMBER_DESCRIPTION, GET_APPLICATION_CHANGE_DESCRIPTION, GET_SAVE_APPLICATION_MODIFICATION_DESCRIPTION, GET_DROP_MODIFICATION_DESCRIPTION, GET_CURRENT_MODIFICATION_DESCRIPTION
-from .functions import get_current_week, get_past_messages, is_empty_application_string, get_default_application_string, convert_string_to_json, convert_json_to_string, get_summary, order_json_by_days, get_shift, complement_shifts, overwrite_binary
-
+from .utils.constants import USER_INIT_MSG, ADMIN_INIT_MSG, SUMMARIZATION_DESC, GET_CURRENT_DATETIME_DESCRIPTION, GET_WEEKNUMBER_DESCRIPTION, GET_APPLICATION_CHANGE_DESCRIPTION, GET_SAVE_APPLICATION_MODIFICATION_DESCRIPTION, GET_DROP_MODIFICATION_DESCRIPTION, GET_CURRENT_MODIFICATION_DESCRIPTION, GET_SCHEDULE_OPTIMIZER_DESCRIPTION
+from .utils.agent_functions import get_current_week, get_past_messages, is_empty_application_string, get_default_application_string, convert_string_to_json, convert_json_to_string, get_summary, order_json_by_days, get_shift, complement_shifts, overwrite_binary, user_in_group, get_users_without_application
+from .solver import solve
 
 load_dotenv()
 
@@ -28,12 +28,12 @@ class ShiftUpdateOutputSchema(BaseModel):
 
 def save_shift():
     shift = get_shift(user, week)
-    if is_empty_application_string(shift.modification):
+    if is_empty_application_string(shift.modification, 'x'):
         return f"You don't have any ongoing modifications, nothing to save!"
     else:
         shift.applied_shift = overwrite_binary(
             shift.modification, shift.applied_shift)
-        shift.modification = get_default_application_string()
+        shift.modification = get_default_application_string('x')
         shift.save()
         return "You successfully saved your application. If you have any questions or want to modify it feel free to ask!"
 
@@ -62,7 +62,8 @@ def get_current_date_time():
 def get_application_summarization():
     shift = get_shift(user, week)
     application = shift.applied_shift
-    application_json = convert_string_to_json(application)
+    application_json_raw = convert_string_to_json(application)
+    application_json = json.loads(application_json_raw)
     summary = get_summary(application_json)
     return summary
 
@@ -116,7 +117,24 @@ def change_schedule(user_request: str) -> ShiftUpdateOutputSchema:
     return ShiftUpdateOutputSchema(agent_output=summary)
 
 
-main_tools = [
+def schedule_optimizer():
+    ret_val = get_users_without_application()
+    warning_msg = ""
+    if len(ret_val) == 2:
+        warning_msg = ret_val[1]
+    solve()
+    return "Successful optimizing! " + warning_msg
+
+
+admin_tools = [
+    StructuredTool.from_function(
+        func=schedule_optimizer,
+        name="Schedule optimizing",
+        description=GET_SCHEDULE_OPTIMIZER_DESCRIPTION,
+    ),
+]
+
+user_tools = [
     StructuredTool.from_function(
         func=get_application_summarization,
         name="Application summarization",
@@ -153,17 +171,18 @@ main_tools = [
         name="Get current date/time",
         description=GET_CURRENT_DATETIME_DESCRIPTION,
     ),
-
 ]
 
 converter_tools = []
 
-main_prompt = hub.pull("davsza/crew-optimizer")
+prompt = hub.pull("davsza/crew-optimizer")
 converter_prompt = hub.pull("davsza/crew-optimizer-converter")
 
 llm = ChatOpenAI(model="gpt-4o-2024-08-06", temperature=0)
-main_agent = create_structured_chat_agent(
-    llm=llm, tools=main_tools, prompt=main_prompt)
+user_agent = create_structured_chat_agent(
+    llm=llm, tools=user_tools, prompt=prompt)
+admin_agent = create_structured_chat_agent(
+    llm=llm, tools=admin_tools, prompt=prompt)
 converter_agent = create_structured_chat_agent(
     llm=llm, tools=converter_tools, prompt=converter_prompt)
 
@@ -196,16 +215,27 @@ def call_agent(request):
     memory = ConversationBufferMemory(
         memory_key="chat_history", return_messages=True)
 
-    agent_executor = AgentExecutor.from_agent_and_tools(
-        agent=main_agent,
-        tools=main_tools,
-        verbose=True,
-        memory=memory,
-        handle_parsing_errors=True,
-        max_iterations=5,
-    )
+    if user_in_group(user, 'Supervisor'):
+        agent_executor = AgentExecutor.from_agent_and_tools(
+            agent=admin_agent,
+            tools=admin_tools,
+            verbose=True,
+            memory=memory,
+            handle_parsing_errors=True,
+            max_iterations=5,
+        )
+        initial_message = ADMIN_INIT_MSG
+    else:
+        agent_executor = AgentExecutor.from_agent_and_tools(
+            agent=user_agent,
+            tools=user_tools,
+            verbose=True,
+            memory=memory,
+            handle_parsing_errors=True,
+            max_iterations=5,
+        )
+        initial_message = USER_INIT_MSG
 
-    initial_message = INIT_MSG_FOR_AGENT
     memory.chat_memory.add_message(SystemMessage(content=initial_message))
 
     past_messages = get_past_messages(user)

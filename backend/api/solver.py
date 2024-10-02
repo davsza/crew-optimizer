@@ -1,5 +1,5 @@
 from ortools.linear_solver import pywraplp
-from .functions import get_current_week, get_shifts_by_week
+from .utils.agent_functions import get_current_week, get_shifts_by_week
 from .models import Shift
 from django.contrib.auth.models import User
 

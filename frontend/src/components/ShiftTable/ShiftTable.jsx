@@ -16,7 +16,7 @@ const ShiftTable = ({ shift, isAcceptedShift }) => {
 
   const shiftLabel = isAcceptedShift
     ? getBuiltInStrings.SCHEDULE
-    : getBuiltInStrings.APPLIED_SCHEDULE;
+    : getBuiltInStrings.APPLICATION;
 
   if (
     !currentShift ||

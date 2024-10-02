@@ -128,7 +128,7 @@ export const getAdminTableHeader = () => {
 export const getBuiltInStrings = {
   SELECT_WEEK_STRING: "Select a week",
   SCHEDULE: "Schedule",
-  APPLIED_SCHEDULE: "Applied schedule",
+  APPLICATION: "Application",
   DAY_OFF: "Day off",
   RESERVE: "Reserve",
   NO_SCHEDULE_TO_DISPLAY: "No schedule to display",
