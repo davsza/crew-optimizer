@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import Shift, Message
+from .models import Roster, Message
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -14,10 +14,10 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
-class ShiftSerializer(serializers.ModelSerializer):
+class RosterSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Shift
-        fields = ["id", "week", "year", "applied_shift", "actual_shift", "work_days", "off_days", "reserve_days",
+        model = Roster
+        fields = ["id", "week_number", "year", "application", "schedule", "work_days", "off_days", "reserve_days",
                   "owner"]
         extra_kwargs = {"owner": {"read_only": True}}
 

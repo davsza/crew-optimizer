@@ -12,14 +12,14 @@ import "./Dropdown.css";
 const Dropdown = ({ year, finalShifts, onSelectWeek }) => {
   const [options, setOptions] = useState([]);
   const [selectedOption, setSelectedOption] = useState("");
-  const [shifts, setShifts] = useState([]);
+  const [rosters, setRosters] = useState([]);
 
-  const fetchShifts = (week) => {
+  const getRosters = (week_number) => {
     api
-      .get(`/api/shifts/lastweeks/${week}`)
+      .get(`/api/rosters/lastweeks/${week_number}`)
       .then((res) => res.data)
       .then((data) => {
-        setShifts(data);
+        setRosters(data);
       })
       .catch((err) => alert(err));
   };
@@ -27,20 +27,20 @@ const Dropdown = ({ year, finalShifts, onSelectWeek }) => {
   useEffect(() => {
     const currWeek = getCurrentWeek(0);
     const nextWeek = getCurrentWeek(1);
-    const appliableWeek = getCurrentWeek(2);
+    const applicationWeek = getCurrentWeek(2);
     if (finalShifts) {
-      fetchShifts(nextWeek);
+      getRosters(nextWeek);
       setSelectedOption(currWeek);
     } else {
-      fetchShifts(appliableWeek);
-      setSelectedOption(appliableWeek);
+      getRosters(applicationWeek);
+      setSelectedOption(applicationWeek);
     }
   }, []);
 
   useEffect(() => {
-    const weekOptions = shifts.map((shift) => shift.week);
+    const weekOptions = rosters.map((shift) => shift.week_number);
     setOptions(weekOptions);
-  }, [shifts]);
+  }, [rosters]);
 
   const handleChange = (event) => {
     const selectedWeek = event.target.value;

@@ -88,18 +88,18 @@ export const getDefaultDays = () => {
   return "0000000";
 };
 
-export const getShiftDisplayParameters = (
-  shift,
+export const getRosterDisplayParameters = (
+  roster,
   index,
-  appliedScheduleOfTheDay
+  applicationOfTheDay
 ) => {
   const from = getStartingHours(index);
   const to = getFinishingHours(index);
-  const appliedShift = appliedScheduleOfTheDay[index];
+  const application = applicationOfTheDay[index];
   const style = {
-    color: shift === "1" ? "#ffffff" : "#007bff",
-    backgroundColor: shift === "1" ? "#007bff" : "transparent",
-    border: shift !== "1" ? "1px solid #007bff" : "none",
+    color: roster === "1" ? "#ffffff" : "#007bff",
+    backgroundColor: roster === "1" ? "#007bff" : "transparent",
+    border: roster !== "1" ? "1px solid #007bff" : "none",
     left: `${(from / 24) * 100}%`,
     width: `${((to - from) / 24) * 100}%`,
   };
@@ -107,7 +107,7 @@ export const getShiftDisplayParameters = (
   return {
     from,
     to,
-    appliedShift,
+    application,
     style,
   };
 };
@@ -132,7 +132,6 @@ export const getBuiltInStrings = {
   DAY_OFF: "Day off",
   RESERVE: "Reserve",
   NO_SCHEDULE_TO_DISPLAY: "No schedule to display",
-  GENERATE_SHIFTS: "Generate shifts",
 };
 
 export const formatTimestampToFormattedTime = (timestamp) => {
@@ -141,8 +140,8 @@ export const formatTimestampToFormattedTime = (timestamp) => {
   let hours = date.getHours();
   let minutes = date.getMinutes();
 
-  hours = hours < 10 ? '0' + hours : hours;
-  minutes = minutes < 10 ? '0' + minutes : minutes;
+  hours = hours < 10 ? "0" + hours : hours;
+  minutes = minutes < 10 ? "0" + minutes : minutes;
 
   return `${hours}:${minutes}`;
-}
+};

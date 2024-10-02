@@ -3,11 +3,11 @@ from django.contrib.auth.models import User
 from .utils.constants import NUMBER_OF_DAYS, NUMBER_OF_SHIFTS, MESSAGE_MAX_LENGTH
 
 
-class Shift(models.Model):
-    week = models.IntegerField()
+class Roster(models.Model):
+    week_number = models.IntegerField()
     year = models.IntegerField()
-    applied_shift = models.CharField(max_length=NUMBER_OF_SHIFTS)
-    actual_shift = models.CharField(max_length=NUMBER_OF_SHIFTS)
+    application = models.CharField(max_length=NUMBER_OF_SHIFTS)
+    schedule = models.CharField(max_length=NUMBER_OF_SHIFTS)
     modification = models.CharField(max_length=NUMBER_OF_SHIFTS)
     work_days = models.CharField(max_length=NUMBER_OF_DAYS)
     off_days = models.CharField(max_length=NUMBER_OF_DAYS)

@@ -2,41 +2,41 @@ from django.shortcuts import render
 from django.contrib.auth.models import User, Group
 from rest_framework import generics
 from rest_framework.views import APIView
-from .serializers import UserSerializer, ShiftSerializer, MessageSerializer
+from .serializers import UserSerializer, RosterSerializer, MessageSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Shift, Message
+from .models import Roster, Message
 from django.http import JsonResponse
 from .agent import call_agent
 
 
-class ShiftGivenWeekQuery(generics.ListAPIView):
-    serializer_class = ShiftSerializer
+class RosterGivenWeekQuery(generics.ListAPIView):
+    serializer_class = RosterSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
-        week = self.kwargs.get('week')
-        return Shift.objects.filter(owner=user, week=week)
+        week_number = self.kwargs.get('week_number')
+        return Roster.objects.filter(owner=user, week_number=week_number)
 
 
-class ShiftGivenWeekQueryAdmin(generics.ListAPIView):
-    serializer_class = ShiftSerializer
+class RosterGivenWeekQueryAdmin(generics.ListAPIView):
+    serializer_class = RosterSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        week = self.kwargs.get('week')
+        week_number = self.kwargs.get('week_number')
         supervisor_group = Group.objects.get(name='Supervisor')
-        return Shift.objects.filter(week=week).exclude(owner__groups=supervisor_group)
+        return Roster.objects.filter(week_number=week_number).exclude(owner__groups=supervisor_group)
 
 
-class ShiftLastWeeksQuery(generics.ListAPIView):
-    serializer_class = ShiftSerializer
+class RosterLastWeeksQuery(generics.ListAPIView):
+    serializer_class = RosterSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
-        week = self.kwargs.get('week')
-        return Shift.objects.filter(owner=user, week__lte=week)
+        week_number = self.kwargs.get('week_number')
+        return Roster.objects.filter(owner=user, week_number__lte=week_number)
 
 
 class MessageListCreate(generics.ListCreateAPIView):
@@ -51,22 +51,22 @@ class MessageListCreate(generics.ListCreateAPIView):
         serializer.save(owner=self.request.user)
 
 
-class ShiftListCreate(generics.ListCreateAPIView):
-    serializer_class = ShiftSerializer
+class RosterListCreate(generics.ListCreateAPIView):
+    serializer_class = RosterSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
-        return Shift.objects.filter(owner=user)
+        return Roster.objects.filter(owner=user)
 
 
-class ShiftDelete(generics.DestroyAPIView):
-    serializer_class = ShiftSerializer
+class RosterDelete(generics.DestroyAPIView):
+    serializer_class = RosterSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
-        return Shift.objects.filter(owner=user)
+        return Roster.objects.filter(owner=user)
 
 
 class CreateUserView(generics.CreateAPIView):
@@ -100,7 +100,6 @@ def get_user_details(request):
 
     user_dict = {user['id']: user['username'] for user in users}
     return JsonResponse(user_dict)
-
 
 
 class AgentView(APIView):

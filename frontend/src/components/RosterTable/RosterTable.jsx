@@ -1,32 +1,30 @@
 import React from "react";
-import "./ShiftTable.css";
+import "./RosterTable.css";
 import {
   MONTHS,
   getStartDateOfWeek,
   formatDate,
   datePlusDays,
 } from "../../constants";
-import ShiftDisplay from "../ShiftDisplay/ShiftDisplay";
+import RosterDisplay from "../RosterDisplay/RosterDisplay";
 import { getBuiltInStrings } from "../../constants";
 
-const ShiftTable = ({ shift, isAcceptedShift }) => {
-  const currentShift = isAcceptedShift
-    ? shift.actual_shift
-    : shift.applied_shift;
+const RosterTable = ({ roster, isAcceptedRoster }) => {
+  const currentRoster = isAcceptedRoster ? roster.schedule : roster.application;
 
-  const shiftLabel = isAcceptedShift
+  const rosterLabel = isAcceptedRoster
     ? getBuiltInStrings.SCHEDULE
     : getBuiltInStrings.APPLICATION;
 
   if (
-    !currentShift ||
-    typeof currentShift !== "string" ||
-    currentShift.length !== 21
+    !currentRoster ||
+    typeof currentRoster !== "string" ||
+    currentRoster.length !== 21
   ) {
     return <div>Error: Invalid schedule string.</div>;
   }
 
-  const startDate = getStartDateOfWeek(shift.year, shift.week);
+  const startDate = getStartDateOfWeek(roster.year, roster.week_number);
   const startDay = startDate.getDate();
   const endDate = new Date(startDate.getTime());
   endDate.setDate(endDate.getDate() + 6);
@@ -37,22 +35,22 @@ const ShiftTable = ({ shift, isAcceptedShift }) => {
       <thead>
         <tr>
           <th>
-            {shiftLabel} for {MONTHS[startDate.getMonth()]} {startDay} -{" "}
+            {rosterLabel} for {MONTHS[startDate.getMonth()]} {startDay} -{" "}
             {MONTHS[endDate.getMonth()]} {endDay}
           </th>
         </tr>
       </thead>
       <tbody>
         {[0, 1, 2, 3, 4, 5, 6].map((day) => {
-          const shiftOfTheDay = currentShift
+          const rosterOfTheDay = currentRoster
             .substring(day * 3, day * 3 + 3)
             .split("");
-          const appliedShiftOfTheDay = shift.applied_shift
+          const appliedRosterOfTheDay = roster.application
             .substring(day * 3, day * 3 + 3)
             .split("");
-          const workDays = shift.work_days;
-          const offDays = shift.off_days;
-          const reserveDays = shift.reserve_days;
+          const workDays = roster.work_days;
+          const offDays = roster.off_days;
+          const reserveDays = roster.reserve_days;
           const displayDate = datePlusDays(startDate, day);
           const currDay = new Date();
           let additionClass = false;
@@ -65,18 +63,18 @@ const ShiftTable = ({ shift, isAcceptedShift }) => {
 
           return (
             <tr key={day}>
-              <td key={shift} className="schedule-cell">
+              <td key={roster} className="schedule-cell">
                 <div className="flex-container">
                   <div className="vertical-text">{formatDate(displayDate)}</div>
-                  <ShiftDisplay
-                    scheduleOfTheDay={shiftOfTheDay}
-                    appliedScheduleOfTheDay={appliedShiftOfTheDay}
+                  <RosterDisplay
+                    scheduleOfTheDay={rosterOfTheDay}
+                    appliedScheduleOfTheDay={appliedRosterOfTheDay}
                     highlighted={additionClass}
                     workDays={workDays}
                     offDays={offDays}
                     reserveDays={reserveDays}
                     day={day}
-                    isAcceptedShift={isAcceptedShift}
+                    isAcceptedRoster={isAcceptedRoster}
                   />
                 </div>
               </td>
@@ -88,4 +86,4 @@ const ShiftTable = ({ shift, isAcceptedShift }) => {
   );
 };
 
-export default ShiftTable;
+export default RosterTable;

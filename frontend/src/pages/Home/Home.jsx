@@ -1,54 +1,53 @@
 import { useState, useEffect } from "react";
 import api from "../../api";
-import ShiftPanel from "../../components/ShiftPanel/ShitPanel";
+import RosterPanel from "../../components/RosterPanel/RosterPanel";
 import Header from "../../components/Header/Header";
 import Dropdown from "../../components/Dropdown/Dropdown";
 import ModeDropdown from "../../components/ModeDropdown/ModeDropdown";
-import AdminShiftTable from "../../components/AdminShiftTable/AdminShiftTable";
+import AdminRosterTable from "../../components/AdminRosterTable/AdminRosterTable";
 import Message from "../../components/Message/Message";
 import "./Home.css";
 import {
   getCurrentWeek,
   getCurrentYear,
   getBuiltInStrings,
-  getAdminTableHeader,
 } from "../../constants";
 
 function Home() {
-  const week = getCurrentWeek(0);
-  const appliedShiftWeek = getCurrentWeek(2);
+  const week_number = getCurrentWeek(0);
+  const appliedRosterWeek = getCurrentWeek(2);
 
   const year = getCurrentYear();
 
-  const [finalShift, setFinalShift] = useState([]);
-  const [appliedShift, setAppliedShift] = useState([]);
-  const [allShifts, setAllShifts] = useState([]);
+  const [schedule, setSchedule] = useState([]);
+  const [application, setApplication] = useState([]);
+  const [allOfSchedules, setAllOfSchedules] = useState([]);
   const [selectedOption, setSelectedOption] = useState(true);
-  const [selectedWeekForFinalShifts, setSelectedWeekForFinalShifts] =
-    useState(week);
-  const [selectedWeekForAppliedShifts, setSelectedWeekForAppliedShifts] =
-    useState(appliedShiftWeek);
+  const [selectedWeekForSchedule, setSelectedWeekForSchedule] =
+    useState(week_number);
+  const [selectedWeekForApplication, setSelectedWeekForApplication] =
+    useState(appliedRosterWeek);
   const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState([]);
   const [userGroup, setUserGroup] = useState("");
   const [userName, setUserName] = useState("");
-  const [messages, setMessages] = useState([]);
 
-  const getFinalShift = (week) => {
+  const getSchedule = (week_number) => {
     api
-      .get(`/api/shifts/${week}`)
+      .get(`/api/rosters/${week_number}`)
       .then((res) => res.data)
       .then((data) => {
-        setFinalShift(data[0]);
+        setSchedule(data[0]);
       })
       .catch((err) => alert(err));
   };
 
-  const getAppliedShift = (week) => {
+  const getApplication = (week_number) => {
     api
-      .get(`/api/shifts/${week}`)
+      .get(`/api/rosters/${week_number}`)
       .then((res) => res.data)
       .then((data) => {
-        setAppliedShift(data[0]);
+        setApplication(data[0]);
       })
       .catch((err) => alert(err));
   };
@@ -63,17 +62,17 @@ function Home() {
       .catch((err) => alert(err));
   };
 
-  const getAllShifts = (week) => {
+  const getAllRosters = (week_number) => {
     api
-      .get(`/api/get-shifts-admin/${week}`)
+      .get(`/api/get-rosters-admin/${week_number}`)
       .then((res) => res.data)
       .then((data) => {
-        setAllShifts(data);
+        setAllOfSchedules(data);
       })
       .catch((err) => alert(err));
   };
 
-  const fetchUserDate = () => {
+  const getUserData = () => {
     api
       .get("/api/get-user-data/")
       .then((res) => res.data)
@@ -84,34 +83,29 @@ function Home() {
       .catch((err) => alert(err));
   };
 
-  const fetchSuccess = () => {
-    api.get("/api/get-success-button/").catch((err) => console.log(err));
-    window.location.reload();
-  };
-
   useEffect(() => {
-    getFinalShift(week);
-    getAppliedShift(appliedShiftWeek);
-    getAllShifts(week);
-    fetchUserDate();
+    getSchedule(week_number);
+    getApplication(appliedRosterWeek);
+    getAllRosters(week_number);
+    getUserData();
     getMessages();
   }, []);
 
   useEffect(() => {
-    getFinalShift(selectedWeekForFinalShifts);
-  }, [selectedWeekForFinalShifts]);
+    getSchedule(selectedWeekForSchedule);
+  }, [selectedWeekForSchedule]);
 
   useEffect(() => {
-    getAppliedShift(selectedWeekForAppliedShifts);
-    getAllShifts(selectedWeekForAppliedShifts);
-  }, [selectedWeekForAppliedShifts, selectedOption]);
+    getApplication(selectedWeekForApplication);
+    getAllRosters(selectedWeekForApplication);
+  }, [selectedWeekForApplication, selectedOption]);
 
-  const handleSelectWeekForFinalShifts = (week) => {
-    setSelectedWeekForFinalShifts(week);
+  const handleSelectWeekForFinalRosters = (week_number) => {
+    setSelectedWeekForSchedule(week_number);
   };
 
-  const handleSelectWeekForAppliedShifts = (week) => {
-    setSelectedWeekForAppliedShifts(week);
+  const handleSelectWeekForAppliedRosters = (week_number) => {
+    setSelectedWeekForApplication(week_number);
   };
 
   const handleDropdownChange = (value) => {
@@ -134,11 +128,11 @@ function Home() {
         if (res.status === 201) {
           console.log("Message sent");
         } else {
-          console.log("Failed to make a shift");
+          console.log("Failed to make a roster");
         }
         getMessages();
-        getAppliedShift(appliedShiftWeek);
-        getAllShifts(appliedShiftWeek);
+        getApplication(appliedRosterWeek);
+        getAllRosters(appliedRosterWeek);
       })
       .catch((err) => alert(err));
 
@@ -148,9 +142,6 @@ function Home() {
   return (
     <div>
       <Header userName={userName}></Header>
-      <button onClick={fetchSuccess}>
-        {getBuiltInStrings.GENERATE_SHIFTS}
-      </button>
       <div className="container">
         <div className="schedule-container">
           {userGroup !== "Supervisor" ? (
@@ -158,22 +149,22 @@ function Home() {
               <div className="dropdown-container">
                 <Dropdown
                   year={year}
-                  finalShifts={true}
-                  onSelectWeek={handleSelectWeekForFinalShifts}
+                  finalRosters={true}
+                  onSelectWeek={handleSelectWeekForFinalRosters}
                 />
                 <Dropdown
                   year={year}
-                  finalShifts={false}
-                  onSelectWeek={handleSelectWeekForAppliedShifts}
+                  finalRosters={false}
+                  onSelectWeek={handleSelectWeekForAppliedRosters}
                 />
               </div>
-              {finalShift === undefined || appliedShift === undefined ? (
+              {schedule === undefined || application === undefined ? (
                 <p>{getBuiltInStrings.NO_SCHEDULE_TO_DISPLAY}</p>
               ) : (
                 <div className="table-container">
-                  <ShiftPanel
-                    schedule={finalShift}
-                    appliedSchedule={appliedShift}
+                  <RosterPanel
+                    schedule={schedule}
+                    appliedSchedule={application}
                   />
                 </div>
               )}
@@ -184,14 +175,14 @@ function Home() {
                 <ModeDropdown onChange={handleDropdownChange} />
                 <Dropdown
                   year={year}
-                  finalShifts={false}
-                  onSelectWeek={handleSelectWeekForAppliedShifts}
+                  finalRosters={false}
+                  onSelectWeek={handleSelectWeekForAppliedRosters}
                 />
               </div>
               <div className="table-container">
-                <AdminShiftTable
-                  shiftsData={allShifts}
-                  isAcceptedShift={selectedOption}
+                <AdminRosterTable
+                  rostersData={allOfSchedules}
+                  isAcceptedRoster={selectedOption}
                 />
               </div>
             </>

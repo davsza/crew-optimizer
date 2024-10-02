@@ -1,6 +1,6 @@
 import datetime
 from django.contrib.auth.models import User, Group
-from api.models import Message, Shift
+from api.models import Message, Roster
 from django.db.models.query import QuerySet
 import json
 
@@ -30,11 +30,11 @@ def user_in_group(user, group_name):
     return user.groups.filter(name=group_name).exists()
 
 
-def get_shifts_by_week(week_number: int) -> QuerySet[Shift]:
+def get_roster_by_week(week_number: int) -> QuerySet[Roster]:
     admin_users = get_admin_users()
-    shifts = Shift.objects.exclude(
-        owner__in=admin_users).filter(week=week_number)
-    return shifts
+    rosters = Roster.objects.exclude(
+        owner__in=admin_users).filter(week_number=week_number)
+    return rosters
 
 
 def get_past_messages(user):
@@ -42,38 +42,38 @@ def get_past_messages(user):
     return messages
 
 
-def is_empty_application_string(application_string, empty_character):
-    return all(char == empty_character for char in application_string)
+def is_empty_binary_roster(binary_roster, empty_character):
+    return all(char == empty_character for char in binary_roster)
 
 
-def get_default_application_string(empty_character):
+def get_default_binary_roster(empty_character):
     return empty_character * 21
 
 
-def convert_string_to_json(application_string):
+def convert_string_to_json(binary_roster):
     days = ["monday", "tuesday", "wednesday",
             "thursday", "friday", "saturday", "sunday"]
-    schedule = {}
+    ret_json = {}
     for i, day in enumerate(days):
         start_index = i * 3
-        schedule[day] = {
-            "morning": True if application_string[start_index] == "1" else (None if application_string[start_index] == "x" else False),
-            "afternoon": True if application_string[start_index + 1] == "1" else (None if application_string[start_index + 1] == "x" else False),
-            "night": True if application_string[start_index + 2] == "1" else (None if application_string[start_index + 2] == "x" else False)
+        ret_json[day] = {
+            "morning": True if binary_roster[start_index] == "1" else (None if binary_roster[start_index] == "x" else False),
+            "afternoon": True if binary_roster[start_index + 1] == "1" else (None if binary_roster[start_index + 1] == "x" else False),
+            "night": True if binary_roster[start_index + 2] == "1" else (None if binary_roster[start_index + 2] == "x" else False)
         }
 
-    return json.dumps({"shift": schedule}, indent=4)
+    return json.dumps({"roster": ret_json}, indent=4)
 
 
-def convert_json_to_string(shift_json, parse_none_as_x=False):
+def convert_json_to_string(roster_json, parse_none_as_x=False):
     days = ["monday", "tuesday", "wednesday",
             "thursday", "friday", "saturday", "sunday"]
     values_string = ""
 
     for day in days:
-        shifts = shift_json["shift"].get(day, {})
+        roster = roster_json["roster"].get(day, {})
         for shift in ['morning', 'afternoon', 'night']:
-            value = shifts.get(shift, None)
+            value = roster.get(shift, None)
             if parse_none_as_x and value is None:
                 values_string += "x"
             else:
@@ -82,9 +82,9 @@ def convert_json_to_string(shift_json, parse_none_as_x=False):
     return values_string
 
 
-def get_summary(application, current_modification=None, full_modification=None):
+def get_summary(roster_json, current_modification_json=None, full_modification_json=None):
     def format_application_day(day, shifts):
-        active_shifts = [shift_name for shift_name,
+        active_shifts = [shift for shift,
                          active in shifts.items() if active]
 
         if not active_shifts:
@@ -98,7 +98,7 @@ def get_summary(application, current_modification=None, full_modification=None):
             return f"{day.capitalize()} {active_shifts[0]}"
 
     def format_cancellation_day(day, shifts):
-        inactive_shifts = [shift_name for shift_name,
+        inactive_shifts = [shift for shift,
                            active in shifts.items() if active is False]
 
         if not inactive_shifts:
@@ -113,9 +113,9 @@ def get_summary(application, current_modification=None, full_modification=None):
 
     ret_val = ""
 
-    if not current_modification and not full_modification:
+    if not current_modification_json and not full_modification_json:
         application_summary_result = []
-        for day, shifts in application['shift'].items():
+        for day, shifts in roster_json['roster'].items():
             day_summary = format_application_day(day, shifts)
             if day_summary:
                 application_summary_result.append(day_summary)
@@ -126,7 +126,7 @@ def get_summary(application, current_modification=None, full_modification=None):
     else:
         full_modification_application_summary_result = []
         full_modification_cancellation_summary_result = []
-        for day, shifts in full_modification['shift'].items():
+        for day, shifts in full_modification_json['roster'].items():
             day_application_summary = format_application_day(day, shifts)
             day_cancellation_summary = format_cancellation_day(day, shifts)
             if day_application_summary:
@@ -139,8 +139,8 @@ def get_summary(application, current_modification=None, full_modification=None):
         current_modification_application_summary_result = []
         current_modification_cancellation_summary_result = []
 
-        if current_modification:
-            for day, shifts in current_modification['shift'].items():
+        if current_modification_json:
+            for day, shifts in current_modification_json['roster'].items():
                 day_application_summary = format_application_day(day, shifts)
                 day_cancellation_summary = format_cancellation_day(day, shifts)
                 if day_application_summary:
@@ -190,27 +190,27 @@ def get_summary(application, current_modification=None, full_modification=None):
     return ret_val
 
 
-def order_json_by_days(shift_json):
+def order_json_by_days(roster_json):
     days_of_week = ["monday", "tuesday", "wednesday",
                     "thursday", "friday", "saturday", "sunday"]
-    ordered_json = {day: shift_json[day]
-                    for day in days_of_week if day in shift_json}
+    ordered_json = {day: roster_json[day]
+                    for day in days_of_week if day in roster_json}
     return ordered_json
 
 
-def get_shift(user, week):
-    shift = Shift.objects.get(owner=user, week=week)
-    return shift
+def get_roster(user, week_number):
+    roster = Roster.objects.get(owner=user, week_number=week_number)
+    return roster
 
 
-def complement_shifts(input_json_raw):
+def complement_roster(input_json_raw):
     days_of_week = ["monday", "tuesday", "wednesday",
                     "thursday", "friday", "saturday", "sunday"]
     default_shifts = {"morning": None, "afternoon": None, "night": None}
 
     input_json = json.loads(input_json_raw)
 
-    current_shifts = input_json.get("shift", {})
+    current_shifts = input_json.get("roster", {})
 
     for day in days_of_week:
         if day in current_shifts:  # monday, tuesday, etc...
@@ -222,14 +222,11 @@ def complement_shifts(input_json_raw):
         else:
             current_shifts[day] = default_shifts.copy()
 
-    input_json["shift"] = current_shifts
+    input_json["roster"] = current_shifts
     return input_json
 
 
 def overwrite_binary(str1, str2):
-    if len(str1) != len(str2):
-        raise ValueError("Both strings must be of the same length")
-
     application_summary_result = ""
     for i in range(len(str1)):
         if str1[i] == '0' or str1[i] == '1':
@@ -246,9 +243,9 @@ def get_users_without_application():
     user_list = []
     week_number = get_current_week(2)
     for user in users:
-        shift = Shift.objects.get(owner=user, week=week_number)
-        application = shift.applied_shift
-        if is_empty_application_string(application, '0'):
+        roster = Roster.objects.get(owner=user, week_number=week_number)
+        application = roster.application
+        if is_empty_binary_roster(application, '0'):
             user_list.append(user.username)
     return (True, (f"Warning! The following users don't have any application: {', '.join(user_list)}" if len(user_list) > 1 else f"The following user doesn't have any application: {user_list[0]}")) if user_list else (False,)
 

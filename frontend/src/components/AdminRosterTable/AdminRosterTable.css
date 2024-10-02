@@ -6,12 +6,12 @@
   width: 100%;
 }
 
-.shift-table {
+.roster-table {
   width: 100%;
   table-layout: fixed;
 }
 
-.shift-table thead th {
+.roster-table thead th {
   position: sticky;
   top: 0;
   background-color: #b3b3b3;

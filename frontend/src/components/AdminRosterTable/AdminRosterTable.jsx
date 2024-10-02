@@ -1,37 +1,37 @@
 import React, { useState, useEffect } from "react";
 import api from "../../api";
-import ShiftDisplay from "../ShiftDisplay/ShiftDisplay";
-import "./AdminShiftTable.css";
+import RosterDisplay from "../RosterDisplay/RosterDisplay";
+import "./AdminRosterTable.css";
 import { getAdminTableHeader } from "../../constants";
 
-const RenderShifts = ({ isAcceptedShift, shift, day }) => {
-  const currentShift = isAcceptedShift
-    ? shift.actual_shift
-    : shift.applied_shift;
-  const shiftOfTheDay = currentShift.substring(day * 3, day * 3 + 3).split("");
-  const appliedShiftOfTheDay = shift.applied_shift
+const RenderRosters = ({ isAcceptedRoster, roster, day }) => {
+  const currentRoster = isAcceptedRoster ? roster.schedule : roster.application;
+  const rosterOfTheDay = currentRoster
     .substring(day * 3, day * 3 + 3)
     .split("");
-  const workDays = shift.work_days;
-  const offDays = shift.off_days;
-  const reserveDays = shift.reserve_days;
+  const appliedRosterOfTheDay = roster.application
+    .substring(day * 3, day * 3 + 3)
+    .split("");
+  const workDays = roster.work_days;
+  const offDays = roster.off_days;
+  const reserveDays = roster.reserve_days;
   return (
     <td key={day}>
-      <ShiftDisplay
-        scheduleOfTheDay={shiftOfTheDay}
-        appliedScheduleOfTheDay={appliedShiftOfTheDay}
+      <RosterDisplay
+        scheduleOfTheDay={rosterOfTheDay}
+        appliedScheduleOfTheDay={appliedRosterOfTheDay}
         highlighted={false}
         workDays={workDays}
         offDays={offDays}
         reserveDays={reserveDays}
         day={day}
-        isAcceptedShift={isAcceptedShift}
-      ></ShiftDisplay>
+        isAcceptedRoster={isAcceptedRoster}
+      ></RosterDisplay>
     </td>
   );
 };
 
-const AdminShiftTable = ({ shiftsData, isAcceptedShift }) => {
+const AdminRosterTable = ({ rostersData, isAcceptedRoster }) => {
   const [usernames, setUsernames] = useState({});
 
   const headers = getAdminTableHeader();
@@ -56,7 +56,7 @@ const AdminShiftTable = ({ shiftsData, isAcceptedShift }) => {
 
   return (
     <div className="table-container">
-      <table className="shift-table">
+      <table className="roster-table">
         <thead>
           <tr>
             {headers.map((header, index) => (
@@ -65,18 +65,18 @@ const AdminShiftTable = ({ shiftsData, isAcceptedShift }) => {
           </tr>
         </thead>
         <tbody>
-          {shiftsData.map((shift, index) => (
+          {rostersData.map((roster, index) => (
             <tr key={index}>
               <td className="username-container">
-                {getUsernameById(shift.owner)}
+                {getUsernameById(roster.owner)}
               </td>
               {[0, 1, 2, 3, 4, 5, 6].map((dayIndex) => (
-                <RenderShifts
-                  key={`${dayIndex}-${isAcceptedShift}`}
-                  isAcceptedShift={isAcceptedShift}
-                  shift={shift}
+                <RenderRosters
+                  key={`${dayIndex}-${isAcceptedRoster}`}
+                  isAcceptedRoster={isAcceptedRoster}
+                  roster={roster}
                   day={dayIndex}
-                  user={getUsernameById(shift.owner)}
+                  user={getUsernameById(roster.owner)}
                 />
               ))}
             </tr>
@@ -87,4 +87,4 @@ const AdminShiftTable = ({ shiftsData, isAcceptedShift }) => {
   );
 };
 
-export default AdminShiftTable;
+export default AdminRosterTable;

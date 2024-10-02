@@ -1,8 +1,8 @@
-import { getShiftDisplayParameters } from "../../constants";
-import "./ShiftDisplay.css";
+import { getRosterDisplayParameters } from "../../constants";
+import "./RosterDisplay.css";
 import { getBuiltInStrings } from "../../constants";
 
-const ShiftDisplay = ({
+const RosterDisplay = ({
   scheduleOfTheDay,
   appliedScheduleOfTheDay,
   highlighted,
@@ -10,14 +10,14 @@ const ShiftDisplay = ({
   offDays,
   reserveDays,
   day,
-  isAcceptedShift,
+  isAcceptedRoster,
 }) => {
   return (
     <div className={`outer ${highlighted ? "highlighted" : ""}`}>
-      {workDays[day] === "1" || !isAcceptedShift ? (
-        scheduleOfTheDay.map((shift, index) => {
-          const { from, to, appliedShift, style } = getShiftDisplayParameters(
-            shift,
+      {workDays[day] === "1" || !isAcceptedRoster ? (
+        scheduleOfTheDay.map((roster, index) => {
+          const { from, to, application, style } = getRosterDisplayParameters(
+            roster,
             index,
             appliedScheduleOfTheDay
           );
@@ -25,7 +25,7 @@ const ShiftDisplay = ({
             <div
               key={index}
               className={`inner ${
-                appliedShift === "1" && isAcceptedShift ? "application" : ""
+                application === "1" && isAcceptedRoster ? "application" : ""
               }`}
               style={style}
             >
@@ -68,4 +68,4 @@ const ShiftDisplay = ({
   );
 };
 
-export default ShiftDisplay;
+export default RosterDisplay;
