@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from .utils.constants import NUMBER_OF_DAYS, NUMBER_OF_SHIFTS, MESSAGE_MAX_LENGTH
+from .utils.constants import DAYS_IN_WEEK, NUMBER_OF_SHIFTS, MESSAGE_MAX_LENGTH
 
 
 class Roster(models.Model):
@@ -9,9 +9,11 @@ class Roster(models.Model):
     application = models.CharField(max_length=NUMBER_OF_SHIFTS)
     schedule = models.CharField(max_length=NUMBER_OF_SHIFTS)
     modification = models.CharField(max_length=NUMBER_OF_SHIFTS)
-    work_days = models.CharField(max_length=NUMBER_OF_DAYS)
-    off_days = models.CharField(max_length=NUMBER_OF_DAYS)
-    reserve_days = models.CharField(max_length=NUMBER_OF_DAYS)
+    work_days = models.CharField(max_length=DAYS_IN_WEEK)
+    off_days = models.CharField(max_length=DAYS_IN_WEEK)
+    reserve_days = models.CharField(max_length=DAYS_IN_WEEK)
+    vacation = models.CharField(max_length=DAYS_IN_WEEK)
+    published = models.BooleanField(default=False)
     owner = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="shifts")
 

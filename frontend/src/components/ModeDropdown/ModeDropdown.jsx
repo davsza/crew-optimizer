@@ -17,8 +17,8 @@ const ModeDropdown = ({ onChange }) => {
       onChange={handleChange}
       className="modedropdown"
     >
-      <option value="true">{getBuiltInStrings.SCHEDULE}</option>
-      <option value="">{getBuiltInStrings.APPLICATION}</option>
+      <option value="true">{getBuiltInStrings.APPLICATION}</option>
+      <option value="">{getBuiltInStrings.SCHEDULE}</option>
     </select>
   );
 };

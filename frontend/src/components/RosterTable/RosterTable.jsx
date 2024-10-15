@@ -9,12 +9,12 @@ import {
 import RosterDisplay from "../RosterDisplay/RosterDisplay";
 import { getBuiltInStrings } from "../../constants";
 
-const RosterTable = ({ roster, isAcceptedRoster }) => {
-  const currentRoster = isAcceptedRoster ? roster.schedule : roster.application;
+const RosterTable = ({ roster, application }) => {
+  const currentRoster = application ? roster.application : roster.schedule;
 
-  const rosterLabel = isAcceptedRoster
-    ? getBuiltInStrings.SCHEDULE
-    : getBuiltInStrings.APPLICATION;
+  const rosterLabel = application
+    ? getBuiltInStrings.APPLICATION
+    : getBuiltInStrings.SCHEDULE;
 
   if (
     !currentRoster ||
@@ -51,6 +51,8 @@ const RosterTable = ({ roster, isAcceptedRoster }) => {
           const workDays = roster.work_days;
           const offDays = roster.off_days;
           const reserveDays = roster.reserve_days;
+          const vacation = roster.vacation;
+          const published = roster.published;
           const displayDate = datePlusDays(startDate, day);
           const currDay = new Date();
           let additionClass = false;
@@ -73,8 +75,10 @@ const RosterTable = ({ roster, isAcceptedRoster }) => {
                     workDays={workDays}
                     offDays={offDays}
                     reserveDays={reserveDays}
+                    vacation={vacation}
+                    published={published}
                     day={day}
-                    isAcceptedRoster={isAcceptedRoster}
+                    application={application}
                   />
                 </div>
               </td>

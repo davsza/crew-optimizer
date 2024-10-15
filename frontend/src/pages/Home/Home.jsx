@@ -164,7 +164,7 @@ function Home() {
                 <div className="table-container">
                   <RosterPanel
                     schedule={schedule}
-                    appliedSchedule={application}
+                    application={application}
                   />
                 </div>
               )}
@@ -182,7 +182,7 @@ function Home() {
               <div className="table-container">
                 <AdminRosterTable
                   rostersData={allOfSchedules}
-                  isAcceptedRoster={selectedOption}
+                  application={selectedOption}
                 />
               </div>
             </>

@@ -38,7 +38,7 @@ const Dropdown = ({ year, finalShifts, onSelectWeek }) => {
   }, []);
 
   useEffect(() => {
-    const weekOptions = rosters.map((shift) => shift.week_number);
+    const weekOptions = rosters.map((roster) => roster.week_number);
     setOptions(weekOptions);
   }, [rosters]);
 

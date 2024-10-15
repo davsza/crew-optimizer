@@ -17,8 +17,8 @@ class UserSerializer(serializers.ModelSerializer):
 class RosterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Roster
-        fields = ["id", "week_number", "year", "application", "schedule", "work_days", "off_days", "reserve_days",
-                  "owner"]
+        fields = ["id", "week_number", "year", "application", "schedule",
+                  "work_days", "off_days", "reserve_days", "vacation", "published", "owner"]
         extra_kwargs = {"owner": {"read_only": True}}
 
 

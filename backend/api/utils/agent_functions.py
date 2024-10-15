@@ -1,19 +1,24 @@
-import datetime
-from django.contrib.auth.models import User, Group
-from api.models import Message, Roster
-from django.db.models.query import QuerySet
 import json
+from datetime import datetime, timedelta
+from django.contrib.auth.models import Group, User
+from django.db.models.query import QuerySet
+from api.models import Message, Roster
+from .constants import CHAR_ONE, CHAR_ZERO, DAYS_IN_WEEK
+
+
+def now():
+    return datetime.now()
 
 
 def get_current_week(additional_week: int) -> int:
-    current_date = datetime.datetime.now()
-    iso_calendar = current_date.isocalendar()
+    today = now()
+    iso_calendar = today.isocalendar()
     current_week_number = iso_calendar[1]
     return current_week_number + additional_week
 
 
 def is_weekend() -> bool:
-    today = datetime.datetime.now()
+    today = now()
     return today.weekday() >= 5
 
 
@@ -30,7 +35,7 @@ def user_in_group(user, group_name):
     return user.groups.filter(name=group_name).exists()
 
 
-def get_roster_by_week(week_number: int) -> QuerySet[Roster]:
+def get_rosters_by_week(week_number: int) -> QuerySet[Roster]:
     admin_users = get_admin_users()
     rosters = Roster.objects.exclude(
         owner__in=admin_users).filter(week_number=week_number)
@@ -213,12 +218,10 @@ def complement_roster(input_json_raw):
     current_shifts = input_json.get("roster", {})
 
     for day in days_of_week:
-        if day in current_shifts:  # monday, tuesday, etc...
+        if day in current_shifts:
             for shift in default_shifts:
                 if shift not in current_shifts[day]:
                     current_shifts[day][shift] = default_shifts[shift]
-            # day = {shift: day[shift]
-            #         for shift in shifts_of_the_day if shift in day}
         else:
             current_shifts[day] = default_shifts.copy()
 
@@ -226,13 +229,13 @@ def complement_roster(input_json_raw):
     return input_json
 
 
-def overwrite_binary(str1, str2):
+def overwrite_binary(original_binary, replace_with):
     application_summary_result = ""
-    for i in range(len(str1)):
-        if str1[i] == '0' or str1[i] == '1':
-            application_summary_result += str1[i]
+    for i in range(len(original_binary)):
+        if original_binary[i] == CHAR_ZERO or original_binary[i] == CHAR_ONE:
+            application_summary_result += original_binary[i]
         else:
-            application_summary_result += str2[i]
+            application_summary_result += replace_with[i]
 
     return application_summary_result
 
@@ -245,10 +248,128 @@ def get_users_without_application():
     for user in users:
         roster = Roster.objects.get(owner=user, week_number=week_number)
         application = roster.application
-        if is_empty_binary_roster(application, '0'):
+        if is_empty_binary_roster(application, CHAR_ZERO):
             user_list.append(user.username)
     return (True, (f"Warning! The following users don't have any application: {', '.join(user_list)}" if len(user_list) > 1 else f"The following user doesn't have any application: {user_list[0]}")) if user_list else (False,)
 
 
 def user_in_group(user, group_name):
     return user.groups.filter(name=group_name).exists()
+
+
+def get_dates_from_vacation_json(json_input):
+    data = json.loads(json_input)
+    vacation = data['vacation']
+    today = now()
+    start_date = datetime.strptime(
+        vacation['start'], '%d-%m').replace(year=today.year).date()
+    end_date = datetime.strptime(
+        vacation['end'], '%d-%m').replace(year=today.year).date()
+    if 'save' in vacation:
+        save = vacation['save']
+        user = None
+    else:
+        save = False
+        user = User.objects.get(username=vacation["user"])
+    return start_date, end_date, save, user
+
+
+def first_day_of_week(year, week):
+    first_day_of_year = datetime(year, 1, 1)
+    first_monday = first_day_of_year + \
+        timedelta(days=(7 - first_day_of_year.weekday()) % 7)
+    first_day = first_monday + timedelta(weeks=week - 1)
+    return first_day.date()
+
+
+def current_year():
+    today = now()
+    return today.year
+
+
+def get_claimed_vacation(user, year):
+    rosters = Roster.objects.filter(owner=user, year=year)
+    return sum(str(roster.vacation).count(CHAR_ONE) for roster in rosters)
+
+
+def replace_binary(binary_to_replace, from_pos, to_pos, character):
+
+    replaced_binary = (
+        binary_to_replace[:from_pos] +
+        character * (to_pos - from_pos) +
+        binary_to_replace[to_pos:]
+    )
+
+    return replaced_binary
+
+
+def save_vacation_claim(user, vacation_week_number, vacation_first_day_of_week, vacation_length, replacing_character):
+    week_number = vacation_week_number
+    vac_claim_days = vacation_length
+    roster = get_roster(user, week_number)
+    vac_claim_in_week = DAYS_IN_WEEK - vacation_first_day_of_week + 1
+
+    first_pos = vacation_first_day_of_week - 1
+    if vacation_first_day_of_week + vacation_length - 1 > 7:
+        last_pos = 7
+    else:
+        last_pos = vacation_first_day_of_week + vacation_length - 1
+
+    roster.vacation = replace_binary(
+        roster.vacation, first_pos, last_pos,  replacing_character)
+    if replacing_character == CHAR_ONE:
+        roster.application = replace_binary(
+            roster.application, first_pos * 3, last_pos * 3, CHAR_ZERO)
+    roster.save()
+    vac_claim_days -= vac_claim_in_week
+
+    while vac_claim_days > 0:
+        roster = get_roster(user, week_number + 1)
+        if vac_claim_days > 7:
+            roster.vacation = replace_binary(
+                roster.vacation, 0, 7, replacing_character)
+        else:
+            roster.vacation = replace_binary(
+                roster.vacation, 0, vac_claim_days, replacing_character)
+        vac_claim_days -= DAYS_IN_WEEK
+        roster.save()
+
+
+def get_roster_mapping(rosters, start, end, offset=0):
+    return {i - offset: rosters[i - start] for i in range(start, end)}
+
+
+def get_day_mapping(days, start, end):
+    return {i: days[i - start] for i in range(start, end)}
+
+
+def late_vacation_warning_msg(first_day_for_application_week):
+    return f"Please only apply for vacation starting earliest {first_day_for_application_week.strftime('%d %B %Y')}"
+
+
+def too_much_claimed_vacation_warning_msg(vacation_length, maximum_vacation_claim_per_year, claimed_vacation):
+    return f"You can't take {vacation_length} more vacations days, you have only {maximum_vacation_claim_per_year - claimed_vacation} days left!"
+
+
+def vacation_claim_msg(claim, start_date, end_date):
+    return f"You have {'applied' if claim else 'calceled'} vacation from {start_date.strftime('%d %b')} to {end_date.strftime('%d %b')}"
+
+
+def vacation_claim_rejection_msg(username):
+    return f"Vacation claim is successfully rejected for {username}"
+
+
+def max_consecutive_days(roster, character_to_find):
+    max_count = 0
+    current_count = 0
+
+    for char in roster:
+        if char == character_to_find:
+            current_count += 1
+        else:
+            max_count = max(max_count, current_count)
+            current_count = 0
+
+    max_count = max(max_count, current_count)
+
+    return max_count

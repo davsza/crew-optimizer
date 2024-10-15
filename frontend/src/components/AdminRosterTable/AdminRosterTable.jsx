@@ -4,8 +4,8 @@ import RosterDisplay from "../RosterDisplay/RosterDisplay";
 import "./AdminRosterTable.css";
 import { getAdminTableHeader } from "../../constants";
 
-const RenderRosters = ({ isAcceptedRoster, roster, day }) => {
-  const currentRoster = isAcceptedRoster ? roster.schedule : roster.application;
+const RenderRosters = ({ application, roster, day }) => {
+  const currentRoster = application ? roster.application : roster.schedule;
   const rosterOfTheDay = currentRoster
     .substring(day * 3, day * 3 + 3)
     .split("");
@@ -15,6 +15,8 @@ const RenderRosters = ({ isAcceptedRoster, roster, day }) => {
   const workDays = roster.work_days;
   const offDays = roster.off_days;
   const reserveDays = roster.reserve_days;
+  const vacation = roster.vacation;
+  const published = roster.published;
   return (
     <td key={day}>
       <RosterDisplay
@@ -24,14 +26,16 @@ const RenderRosters = ({ isAcceptedRoster, roster, day }) => {
         workDays={workDays}
         offDays={offDays}
         reserveDays={reserveDays}
+        vacation={vacation}
+        published={published}
         day={day}
-        isAcceptedRoster={isAcceptedRoster}
+        application={application}
       ></RosterDisplay>
     </td>
   );
 };
 
-const AdminRosterTable = ({ rostersData, isAcceptedRoster }) => {
+const AdminRosterTable = ({ rostersData, application }) => {
   const [usernames, setUsernames] = useState({});
 
   const headers = getAdminTableHeader();
@@ -72,8 +76,8 @@ const AdminRosterTable = ({ rostersData, isAcceptedRoster }) => {
               </td>
               {[0, 1, 2, 3, 4, 5, 6].map((dayIndex) => (
                 <RenderRosters
-                  key={`${dayIndex}-${isAcceptedRoster}`}
-                  isAcceptedRoster={isAcceptedRoster}
+                  key={`${dayIndex}-${application}`}
+                  application={application}
                   roster={roster}
                   day={dayIndex}
                   user={getUsernameById(roster.owner)}

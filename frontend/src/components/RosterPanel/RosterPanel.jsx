@@ -2,11 +2,11 @@ import React from "react";
 import "./RosterPanel.css";
 import RosterTable from "../RosterTable/RosterTable";
 
-const RosterPanel = ({ schedule, appliedSchedule }) => {
+const RosterPanel = ({ schedule, application }) => {
   return (
     <div className="table-container">
-      <RosterTable roster={schedule} isAcceptedRoster={true} />
-      <RosterTable roster={appliedSchedule} isAcceptedRoster={false} />
+      <RosterTable roster={schedule} application={false} />
+      <RosterTable roster={application} application={true} />
     </div>
   );
 };

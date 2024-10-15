@@ -95,7 +95,7 @@ export const getRosterDisplayParameters = (
 ) => {
   const from = getStartingHours(index);
   const to = getFinishingHours(index);
-  const application = applicationOfTheDay[index];
+  const applicationForSchedule = applicationOfTheDay[index];
   const style = {
     color: roster === "1" ? "#ffffff" : "#007bff",
     backgroundColor: roster === "1" ? "#007bff" : "transparent",
@@ -107,7 +107,7 @@ export const getRosterDisplayParameters = (
   return {
     from,
     to,
-    application,
+    applicationForSchedule,
     style,
   };
 };
@@ -132,6 +132,8 @@ export const getBuiltInStrings = {
   DAY_OFF: "Day off",
   RESERVE: "Reserve",
   NO_SCHEDULE_TO_DISPLAY: "No schedule to display",
+  VACATION: "Vacation",
+  VACATION_CLAIM: "Vacation claim",
 };
 
 export const formatTimestampToFormattedTime = (timestamp) => {

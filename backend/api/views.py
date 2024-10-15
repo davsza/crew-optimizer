@@ -1,12 +1,12 @@
-from django.shortcuts import render
-from django.contrib.auth.models import User, Group
-from rest_framework import generics
-from rest_framework.views import APIView
-from .serializers import UserSerializer, RosterSerializer, MessageSerializer
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Roster, Message
+from django.contrib.auth.models import Group, User
 from django.http import JsonResponse
+from django.shortcuts import render
+from rest_framework import generics
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.views import APIView
 from .agent import call_agent
+from .models import Message, Roster
+from .serializers import MessageSerializer, RosterSerializer, UserSerializer
 
 
 class RosterGivenWeekQuery(generics.ListAPIView):
@@ -105,4 +105,4 @@ def get_user_details(request):
 class AgentView(APIView):
     def post(self, request):
         call_agent(request)
-        return JsonResponse({"a": "b"})
+        return JsonResponse({})
