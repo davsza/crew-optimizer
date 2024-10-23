@@ -9,7 +9,7 @@ USER_INIT_MSG = """You are an AI assistant that can provide helpful answers usin
                         \nIf you are unable to answer, you can use the following tools: 'Application summarization', 'Modification', Application saving', 'Get current date/time', 'Drop ongoing modification', 'Get week number for application week',
                         You don't have to use them, if it's not mandatory"""
 ADMIN_INIT_MSG = """You are an AI assistant that can provide helpful answers using available tools. You will help a crew control member optimize the users' application to have a perfectly arranged schedule.
-                    \nIf you are unable to answer, you can use the following tools: 'Schedule optimizer',
+                    \nIf you are unable to answer, you can use the following tools: 'Schedule optimizer', 'Reject vacation'.
                     You don't have to use them, if it's not mandatory"""
 GET_CURRENT_DATETIME_DESCRIPTION = """Userful when you need to know the current date/time.
                                       \nNo input is required as it uses global variables."""

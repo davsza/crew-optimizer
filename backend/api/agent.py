@@ -205,7 +205,8 @@ def schedule_optimizer() -> ScheduleOptimizationOutputSchema:
     status, _ = optimize_schedule()
 
     if status == pywraplp.Solver.OPTIMAL:
-        return ScheduleOptimizationOutputSchema(agent_output=SOLVER_STATUS_OPTIMAL + warning_msg)
+        msg = SOLVER_STATUS_OPTIMAL + " " + warning_msg
+        return ScheduleOptimizationOutputSchema(agent_output=msg)
 
     elif status == pywraplp.Solver.FEASIBLE:
         return ScheduleOptimizationOutputSchema(agent_output=SOLVER_STATUS_FEASIBLE)

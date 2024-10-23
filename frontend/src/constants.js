@@ -129,11 +129,11 @@ export const getBuiltInStrings = {
   SELECT_WEEK_STRING: "Select a week",
   SCHEDULE: "Schedule",
   APPLICATION: "Application",
-  DAY_OFF: "Day off",
+  DAY_OFF: "Day Off",
   RESERVE: "Reserve",
   NO_SCHEDULE_TO_DISPLAY: "No schedule to display",
   VACATION: "Vacation",
-  VACATION_CLAIM: "Vacation claim",
+  VACATION_CLAIM: "Vacation",
 };
 
 export const formatTimestampToFormattedTime = (timestamp) => {
