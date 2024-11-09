@@ -2,8 +2,11 @@ import json
 from datetime import datetime, timedelta
 from django.contrib.auth.models import Group, User
 from django.db.models.query import QuerySet
+from django.db.models import Min
 from api.models import Message, Roster
-from .constants import CHAR_ONE, CHAR_ZERO, DAYS_IN_WEEK
+from .constants import CHAR_ONE, CHAR_ZERO, DAYS_IN_WEEK, MAX_VACATION_CLAM_PER_YEAR
+import random
+import calendar
 
 
 def now():
@@ -35,11 +38,11 @@ def user_in_group(user, group_name):
     return user.groups.filter(name=group_name).exists()
 
 
-def get_rosters_by_week(week_number: int) -> QuerySet[Roster]:
+def get_rosters_by_week(week_number: int, first_n: int = 15) -> QuerySet[Roster]:
     admin_users = get_admin_users()
     rosters = Roster.objects.exclude(
         owner__in=admin_users).filter(week_number=week_number)
-    return rosters
+    return rosters[:first_n]
 
 
 def get_past_messages(user):
@@ -51,8 +54,12 @@ def is_empty_binary_roster(binary_roster, empty_character):
     return all(char == empty_character for char in binary_roster)
 
 
-def get_default_binary_roster(empty_character):
-    return empty_character * 21
+def get_default_binary_schedule(char):
+    return char * 21
+
+
+def get_defaul_binary_days(char):
+    return char * 7
 
 
 def convert_string_to_json(binary_roster):
@@ -257,29 +264,31 @@ def user_in_group(user, group_name):
     return user.groups.filter(name=group_name).exists()
 
 
-def get_dates_from_vacation_json(json_input):
+def get_vacation_sick_data(json_input):
     data = json.loads(json_input)
-    vacation = data['vacation']
+    vacation = data['vacation_sick']
     today = now()
     start_date = datetime.strptime(
         vacation['start'], '%d-%m').replace(year=today.year).date()
     end_date = datetime.strptime(
         vacation['end'], '%d-%m').replace(year=today.year).date()
+    mode = vacation['mode']
     if 'save' in vacation:
         save = vacation['save']
         user = None
     else:
         save = False
         user = User.objects.get(username=vacation["user"])
-    return start_date, end_date, save, user
+    return start_date, end_date, save, mode, user
 
 
-def first_day_of_week(year, week):
+def get_first_and_last_day_of_week(year, week):
     first_day_of_year = datetime(year, 1, 1)
     first_monday = first_day_of_year + \
         timedelta(days=(7 - first_day_of_year.weekday()) % 7)
     first_day = first_monday + timedelta(weeks=week - 1)
-    return first_day.date()
+    last_day = first_day + timedelta(days=6)
+    return first_day.date(), last_day.date()
 
 
 def current_year():
@@ -303,9 +312,7 @@ def replace_binary(binary_to_replace, from_pos, to_pos, character):
     return replaced_binary
 
 
-def save_vacation_claim(user, vacation_week_number, vacation_first_day_of_week, vacation_length, replacing_character):
-    week_number = vacation_week_number
-    vac_claim_days = vacation_length
+def save_vacation_claim(user, week_number, vacation_first_day_of_week, vacation_length, replacing_character):
     roster = get_roster(user, week_number)
     vac_claim_in_week = DAYS_IN_WEEK - vacation_first_day_of_week + 1
 
@@ -321,18 +328,19 @@ def save_vacation_claim(user, vacation_week_number, vacation_first_day_of_week, 
         roster.application = replace_binary(
             roster.application, first_pos * 3, last_pos * 3, CHAR_ZERO)
     roster.save()
-    vac_claim_days -= vac_claim_in_week
+    vacation_length -= vac_claim_in_week
 
-    while vac_claim_days > 0:
-        roster = get_roster(user, week_number + 1)
-        if vac_claim_days > 7:
+    while vacation_length > 0:
+        roster = get_roster(user, week_number)
+        if vacation_length > 7:
             roster.vacation = replace_binary(
                 roster.vacation, 0, 7, replacing_character)
         else:
             roster.vacation = replace_binary(
-                roster.vacation, 0, vac_claim_days, replacing_character)
-        vac_claim_days -= DAYS_IN_WEEK
+                roster.vacation, 0, vacation_length, replacing_character)
+        vacation_length -= DAYS_IN_WEEK
         roster.save()
+        week_number += 1
 
 
 def get_roster_mapping(rosters, start, end, offset=0):
@@ -343,8 +351,12 @@ def get_day_mapping(days, start, end):
     return {i: days[i - start] for i in range(start, end)}
 
 
-def late_vacation_warning_msg(first_day_for_application_week):
-    return f"Please only apply for vacation starting earliest {first_day_for_application_week.strftime('%d %B %Y')}"
+def vacation_sickess_claim_dates_warning_msg(mode, first_day_of_application_week, first_day_of_current_week, last_day_of_current_week):
+    first_date = first_day_of_application_week if mode == "vacation" else first_day_of_current_week
+    msg = f"Please only apply for {mode} starting earliest {first_date.strftime('%d %B %Y')}"
+    if mode == "sickness":
+        msg += f" and latest {last_day_of_current_week.strftime('%d %B %Y')}"
+    return msg
 
 
 def too_much_claimed_vacation_warning_msg(vacation_length, maximum_vacation_claim_per_year, claimed_vacation):
@@ -355,8 +367,8 @@ def vacation_claim_msg(claim, start_date, end_date):
     return f"You have {'applied' if claim else 'calceled'} vacation from {start_date.strftime('%d %b')} to {end_date.strftime('%d %b')}"
 
 
-def vacation_claim_rejection_msg(username):
-    return f"Vacation claim is successfully rejected for {username}"
+def vacation_claim_rejection_msg(username, start_date, end_date):
+    return f"Vacation claim is successfully rejected for {username} from {start_date.strftime('%d %b')} to {end_date.strftime('%d %b')}"
 
 
 def max_consecutive_days(roster, character_to_find):
@@ -373,3 +385,119 @@ def max_consecutive_days(roster, character_to_find):
     max_count = max(max_count, current_count)
 
     return max_count
+
+
+def vacation_claim(user, year, week_number, first_day_of_week, claim, claim_length, start_date, end_date):
+    claimed_vacation = get_claimed_vacation(user, year)
+
+    if claim and claimed_vacation + claim_length > MAX_VACATION_CLAM_PER_YEAR:
+        msg = too_much_claimed_vacation_warning_msg(
+            claim_length, MAX_VACATION_CLAM_PER_YEAR, claimed_vacation)
+        return msg
+
+    replace_with = CHAR_ONE if claim else CHAR_ZERO
+
+    save_vacation_claim(user, week_number, first_day_of_week,
+                        claim_length, replace_with)
+
+    msg = vacation_claim_msg(claim, start_date, end_date)
+    return msg
+
+
+def get_user_for_reserve(users, year, week_number, day_index, shift_index):
+    call_ins = {
+        user: sum(1 for roster in Roster.objects.filter(
+            owner=user, year=year) if roster.reserve_call_in)
+        for user in users
+    }
+    min_call_in = min(call_ins.values())
+    users_with_lowest_call_ins = [user for user, reserve_call_ins in call_ins.items(
+    ) if reserve_call_ins == min_call_in]
+    users_to_exclude = []
+
+    # morning shift
+    if shift_index == 0:
+        # on monday
+        if day_index == 0:
+            prev_week_rosters = Roster.objects.filter(
+                owner__in=users, week_number=week_number - 1)
+            for prev_week_roster in prev_week_rosters:
+                # previous week sunday night shift
+                if prev_week_roster.work_days[6] == "1" and prev_week_roster.schedule[20] == "1":
+                    users_to_exclude.append(prev_week_roster.owner)
+        else:
+            current_week_rosters = Roster.objects.filter(
+                owner__in=users, week_number=week_number)
+            for current_week_roster in current_week_rosters:
+                # previous day night shift
+                if current_week_roster.work_days[day_index - 1] == "1" and current_week_roster.schedule[(day_index - 1) * 3 + 2] == "1":
+                    users_to_exclude.append(current_week_roster.owner)
+
+    users_with_lowest_call_ins = [
+        user for user in users_with_lowest_call_ins if user not in users_to_exclude]
+
+    return random.choice(users_with_lowest_call_ins)
+
+
+def sickness_claim(user, year, week_number, sickness_first_day_of_week, sickness_length, start_date, end_date):
+    sickness_claim_in_week = DAYS_IN_WEEK - sickness_first_day_of_week + 1
+
+    first_pos = sickness_first_day_of_week - 1
+    if sickness_first_day_of_week + sickness_length - 1 > 7:
+        last_pos = 7
+    else:
+        last_pos = sickness_first_day_of_week + sickness_length - 1
+
+    rosters = get_rosters_by_week(week_number)
+    user_roster = Roster.objects.get(owner=user, week_number=week_number)
+
+    for day_index in range(first_pos, last_pos):
+        users_for_reserve = [roster.owner for roster in [
+            roster for roster in rosters if roster.reserve_days[day_index] == "1"]]
+        # there is somebody for reserve
+        if users_for_reserve:
+            # user working on that day
+            if user_roster.work_days[day_index] == "1":
+                shift_index = user_roster.schedule[day_index *
+                                                   3:day_index * 3 + 3].index("1")
+
+                reserve_user = get_user_for_reserve(
+                    users_for_reserve, year, week_number, day_index, shift_index)
+                if reserve_user is None:
+                    # no available users
+                    break
+                reserve_user_roster = Roster.objects.get(
+                    owner=reserve_user, week_number=week_number)
+
+                reserve_user_roster.reserve_call_in_days = reserve_user_roster.reserve_days
+                reserve_user_roster.reserve_days = get_defaul_binary_days(
+                    CHAR_ZERO)
+                reserve_user_roster.reserve_call_in = True
+                reserve_user_roster.schedule = reserve_user_roster.schedule[:day_index * 3 +
+                                                                            shift_index] + CHAR_ONE + reserve_user_roster.schedule[day_index * 3 + shift_index + 1:]
+                user_roster.schedule = user_roster.schedule[:day_index * 3 + shift_index] + \
+                    CHAR_ZERO + \
+                    user_roster.schedule[day_index * 3 + shift_index + 1:]
+                user_roster.work_days = user_roster.work_days[:day_index] + \
+                    CHAR_ZERO + user_roster.work_days[day_index + 1:]
+
+                reserve_user_roster.save()
+            # dayoff, reserve or vacation
+            else:
+                if user_roster.off_days[day_index] == "1":
+                    user_roster.off_days = user_roster.off_days[:day_index] + \
+                        CHAR_ZERO + user_roster.off_days[day_index + 1:]
+                if user_roster.reserve_days[day_index] == "1":
+                    user_roster.reserve_days = user_roster.reserve_days[:day_index] + \
+                        CHAR_ZERO + user_roster.reserve_days[day_index + 1:]
+                if user_roster.vacation[day_index] == "1":
+                    user_roster.vacation = user_roster.vacation[:day_index] + \
+                        CHAR_ZERO + user_roster.vacation[day_index + 1:]
+            user_roster.sickness = user_roster.sickness[:day_index] + \
+                CHAR_ONE + user_roster.sickness[day_index + 1:]
+            user_roster.save()
+        else:
+            # no free reserve on that day
+            pass
+
+    return "Successful sicnkess claim"

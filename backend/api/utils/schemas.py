@@ -13,15 +13,15 @@ class VacationClaimInputSchema(BaseModel):
     user_input: str
 
 
-class VacationClaimOutputSchema(BaseModel):
-    agent_output: str
-
-
 class VacationRejectionInputSchema(BaseModel):
     user_input: str
 
 
 class VacationRejectionOutputSchema(BaseModel):
+    agent_output: str
+
+
+class VacationSicknessClaimOutputSchema(BaseModel):
     agent_output: str
 
 

@@ -12,8 +12,11 @@ class Roster(models.Model):
     work_days = models.CharField(max_length=DAYS_IN_WEEK)
     off_days = models.CharField(max_length=DAYS_IN_WEEK)
     reserve_days = models.CharField(max_length=DAYS_IN_WEEK)
+    reserve_call_in_days = models.CharField(max_length=DAYS_IN_WEEK)
     vacation = models.CharField(max_length=DAYS_IN_WEEK)
+    sickness = models.CharField(max_length=DAYS_IN_WEEK)
     published = models.BooleanField(default=False)
+    reserve_call_in = models.BooleanField(default=False)
     owner = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="shifts")
 

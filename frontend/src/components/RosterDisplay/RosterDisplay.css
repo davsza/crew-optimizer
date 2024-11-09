@@ -34,6 +34,10 @@
   padding-bottom: 2px;
 }
 
+.reserveCallIn {
+  background-color: #ffaaaa;
+}
+
 .application {
-  border: 3px solid red !important;
+  border: 5px solid #007bff !important;
 }

@@ -27,14 +27,17 @@ from .utils.solver_constants import (
 )
 
 
-def optimize_schedule():
+def optimize_schedule(number_of_users_to_solve, multiplier):
 
     solver = pywraplp.Solver.CreateSolver('SCIP')
+    solver.SetSolverSpecificParametersAsString('display/verblevel=3')
 
     last_week_number = get_current_week(1)
     current_week_number = get_current_week(2)
-    last_week_rosters = get_rosters_by_week(last_week_number)
-    current_week_rosters = get_rosters_by_week(current_week_number)
+    last_week_rosters = get_rosters_by_week(
+        last_week_number, number_of_users_to_solve)
+    current_week_rosters = get_rosters_by_week(
+        current_week_number, number_of_users_to_solve)
     last_week_schedules = {}
     current_week_applications = {}
     last_week_work_days = {}
@@ -63,11 +66,13 @@ def optimize_schedule():
             current_week_roster.vacation, DAY_INDEX_START, DAY_INDEX_END)
 
     # Parameters
-    # TODO: parameter
     min_workers = {
         22: 2, 23: 4, 24: 2, 25: 2, 26: 4, 27: 2, 28: 2, 29: 4, 30: 2, 31: 2,
         32: 4, 33: 2, 34: 2, 35: 4, 36: 2, 37: 1, 38: 2, 39: 1, 40: 1, 41: 2, 42: 1
     }
+
+    min_workers = {key: value * multiplier for key,
+                   value in min_workers.items()}
 
     # Variables
     schedule = {}
@@ -119,7 +124,8 @@ def optimize_schedule():
 
     objective.SetMaximization()
 
-    constraints = []
+    constraints = 0
+    total_constraints = 0
 
     # Constraints
     for w in WORKERS:
@@ -135,70 +141,80 @@ def optimize_schedule():
         # Define work days
         solver.Add(sum(workDays[w, d]
                    for d in DAYS_INDEX_8_14) == number_of_work_days)
+        constraints += 1
 
         # Define off days
         solver.Add(sum(offDays[w, d]
                    for d in DAYS_INDEX_8_14) == number_of_off_days)
+        constraints += 1
 
         # Define reserve days
         solver.Add(sum(reserve[w, d]
                    for d in DAYS_INDEX_8_14) == number_of_reserve_days)
+        constraints += 1
 
         # Each day will be a working, off, reserve or a vacation day
         for d in DAYS_INDEX_8_14:
             solver.Add(workDays[w, d] + offDays[w, d] +
                        reserve[w, d] + vacation[w, d] == 1)
+            constraints += 1
 
         # Each worker can only have shifts on workdays in the second week
         for d in DAYS_INDEX_8_14:
             solver.Add(sum(schedule[w, (d - 1) * 3 + k]
                        for k in range(1, 4)) == workDays[w, d])
+            constraints += 1
 
         # Each worker can work at most one shift per day in the second week
         for d in DAYS_INDEX_8_14:
             solver.Add(sum(schedule[w, (d - 1) * 3 + k]
                        for k in range(1, 4)) <= 1)
-
-        # Ensure at least one off day in every 7-day window
-        # for start_day in DAYS_INDEX_1_8:
-        #     solver.Add(sum(workDays[w, d] for d in range(start_day, start_day + 7)) + sum(reserve[w, d] for d in range(start_day, start_day + 7)) <= 6)
+            constraints += 1
 
         if number_of_off_days > 0 and max_consecutive_no_vac_days > 1:
             # Ensure a reserve day follows a day off
             for d in DAYS_INDEX_8_13:
                 solver.Add(offDays[w, d + 1] >= reserve[w, d])
+                constraints += 1
 
             # Ensure a reserve day cannot be preceded by an off day
             for d in DAYS_INDEX_9_14:
                 solver.Add(offDays[w, d - 1] <= 1 - reserve[w, d])
+                constraints += 1
 
         # After night shifts, workers can't have morning or afternoon shift in both weeks
         # TODO: only for second week
         for n in DAYS_INDEX_8_13:  # for n in DAYS_INDEX_1_13:
             solver.Add(sum(schedule[w, 3 + (n - 1) * 3 + k]
                        for k in range(3)) <= 1)
+            constraints += 1
+
+        total_constraints += constraints
+        print(
+            f'number of constraints for {w}: {constraints}. total: {total_constraints}')
+        constraints = 0
 
     # Minimum required workers for each shift in the second week
     for s in ROSTER_INDEX_22_42:
         solver.Add(sum(schedule[w, s] for w in WORKERS) >= min_workers[s])
+        total_constraints += 1
 
     # Each day must have at least 2 reserve workers in the second week
     for d in DAYS_INDEX_8_14:
-        solver.Add(sum(reserve[w, d] for w in WORKERS) >= 2)
-
-    # TODO: there has to be a 2 long day off in a 2 week period (sum off[i] * off[i + 1] >= 1)
+        solver.Add(sum(reserve[w, d] for w in WORKERS) >= 2 * multiplier)
+        total_constraints += 1
 
     # Solve the model
     status = solver.Solve()
 
     if status == pywraplp.Solver.OPTIMAL:
-        for w, user_id in zip(WORKERS, range(7, 22)):
+        for w in WORKERS:
             schedule_str = ""
             work_days_str = ""
             off_days_str = ""
             reserve_days_str = ""
 
-            user = User.objects.filter(id=user_id).first()
+            user = User.objects.get(username=w)
             roster = Roster.objects.filter(
                 week_number=current_week_number, owner=user).first()
 
@@ -216,7 +232,13 @@ def optimize_schedule():
             roster.off_days = off_days_str
             roster.reserve_days = reserve_days_str
 
+            print(f'{user.username}\'s schedule: {schedule_str} - work days: {work_days_str}, off days: {off_days_str}, reserve days: {reserve_days_str}')
+
             roster.published = True
             roster.save()
 
-    return status, constraints
+        # Retrieve and print statistics
+        print('Solver runtime (ms):', solver.WallTime())
+        print('Number of constraints:', solver.NumConstraints())
+
+    return status, constraints, solver.WallTime(), solver.NumConstraints()

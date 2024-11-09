@@ -98,7 +98,7 @@ export const getRosterDisplayParameters = (
   const applicationForSchedule = applicationOfTheDay[index];
   const style = {
     color: roster === "1" ? "#ffffff" : "#007bff",
-    backgroundColor: roster === "1" ? "#007bff" : "transparent",
+    backgroundColor: roster === "1" ? "red" : "transparent",
     border: roster !== "1" ? "1px solid #007bff" : "none",
     left: `${(from / 24) * 100}%`,
     width: `${((to - from) / 24) * 100}%`,
@@ -134,6 +134,8 @@ export const getBuiltInStrings = {
   NO_SCHEDULE_TO_DISPLAY: "No schedule to display",
   VACATION: "Vacation",
   VACATION_CLAIM: "Vacation",
+  SICKNESS: "Sickness",
+  CALL_IN: "Reserve call in",
 };
 
 export const formatTimestampToFormattedTime = (timestamp) => {

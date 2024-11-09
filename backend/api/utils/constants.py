@@ -6,7 +6,7 @@ CHAR_ZERO = '0'
 CHAR_ONE = '1'
 CHAR_X = 'x'
 USER_INIT_MSG = """You are an AI assistant that can provide helpful answers using available tools. You will have to explain the user's upcoming week's application and modify it if needed.
-                        \nIf you are unable to answer, you can use the following tools: 'Application summarization', 'Modification', Application saving', 'Get current date/time', 'Drop ongoing modification', 'Get week number for application week',
+                        \nIf you are unable to answer, you can use the following tools: 'Application summarization', 'Modification', Application saving', 'Get current date/time', 'Drop ongoing modification', 'Get week number for application week', 'Application for vacation'
                         You don't have to use them, if it's not mandatory"""
 ADMIN_INIT_MSG = """You are an AI assistant that can provide helpful answers using available tools. You will help a crew control member optimize the users' application to have a perfectly arranged schedule.
                     \nIf you are unable to answer, you can use the following tools: 'Schedule optimizer', 'Reject vacation'.
@@ -36,9 +36,9 @@ GET_CURRENT_MODIFICATION_DESCRIPTION = """Usefor for summarizing the current sta
 GET_WEEKEND_VIOLATION = """You can't make any new applications after Friday!"""
 GET_SCHEDULE_OPTIMIZER_DESCRIPTION = """Useful for optimizing and generating a schedule by the applications of the users.
                                         No input is required."""
-GET_APPLICATION_FOR_VACATION_DESCRIPTION = """Useful when the user wants to apply or cancel vacation.
-                                              This function returns a summarization which can be handed over directly to the user. Return the output of the tool exactly as it is, without any modification.
-                                              The input is a single string, the user's request."""
+GET_APPLICATION_FOR_VACATION_OR_SICKNESS_DESCRIPTION = """Useful when the user wants to apply or cancel vacation or apply for sick leave.
+                                                       This function returns a summarization which can be handed over directly to the user. Return the output of the tool exactly as it is, without any modification.
+                                                       The input is a single string, the user's request."""
 GET_REJECT_VACATION_DESCRIPTION = """Useful for rejecting vacation claim for users. The input is the admin's requests, whose claim will be deleted, the begin and the end date of the vacation."""
 NO_ONGOINT_MODIFICATIONS = """You don't have any ongoing modifications, nothing to save!"""
 SUCCESSFUL_SAVE_MSG = """You successfully saved your application. If you have any questions or want to modify it feel free to ask!"""

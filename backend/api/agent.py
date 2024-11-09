@@ -1,5 +1,6 @@
 import json
 from dotenv import load_dotenv
+from datetime import datetime, timedelta
 from langchain import hub
 from langchain.agents import AgentExecutor, create_structured_chat_agent
 from langchain.memory import ConversationBufferMemory
@@ -14,38 +15,35 @@ from .utils.agent_functions import (
     convert_json_to_string,
     convert_string_to_json,
     current_year,
-    first_day_of_week,
-    get_claimed_vacation,
+    get_first_and_last_day_of_week,
     get_current_week,
-    get_dates_from_vacation_json,
-    get_default_binary_roster,
+    get_vacation_sick_data,
+    get_default_binary_schedule,
     get_past_messages,
     get_roster,
     get_summary,
     get_users_without_application,
     is_empty_binary_roster,
-    late_vacation_warning_msg,
+    vacation_sickess_claim_dates_warning_msg,
     order_json_by_days,
     overwrite_binary,
     save_vacation_claim,
-    too_much_claimed_vacation_warning_msg,
+    sickness_claim,
     user_in_group,
-    vacation_claim_msg,
+    vacation_claim,
     vacation_claim_rejection_msg,
 )
 from .utils.constants import (
     ADMIN_INIT_MSG,
-    CHAR_ONE,
     CHAR_X,
     CHAR_ZERO,
     GET_APPLICATION_CHANGE_DESCRIPTION,
-    GET_APPLICATION_FOR_VACATION_DESCRIPTION,
+    GET_APPLICATION_FOR_VACATION_OR_SICKNESS_DESCRIPTION,
     GET_CURRENT_MODIFICATION_DESCRIPTION,
     GET_DROP_MODIFICATION_DESCRIPTION,
     GET_REJECT_VACATION_DESCRIPTION,
     GET_SAVE_APPLICATION_MODIFICATION_DESCRIPTION,
     GET_SCHEDULE_OPTIMIZER_DESCRIPTION,
-    MAX_VACATION_CLAM_PER_YEAR,
     NO_ONGOINT_MODIFICATIONS,
     SOLVER_STATUS_FEASIBLE,
     SOLVER_STATUS_INFEASIBLE,
@@ -65,9 +63,9 @@ from .utils.schemas import (
     ScheduleOptimizationOutputSchema,
     SummaryOutputSchema,
     VacationClaimInputSchema,
-    VacationClaimOutputSchema,
     VacationRejectionInputSchema,
     VacationRejectionOutputSchema,
+    VacationSicknessClaimOutputSchema,
 )
 
 
@@ -85,7 +83,7 @@ def save_roster() -> SaveRosterOutputSchema:
     else:
         roster.application = overwrite_binary(
             roster.modification, roster.application)
-        roster.modification = get_default_binary_roster(CHAR_X)
+        roster.modification = get_default_binary_schedule(CHAR_X)
         roster.save()
         return SaveRosterOutputSchema(agent_output=SUCCESSFUL_SAVE_MSG)
 
@@ -95,7 +93,7 @@ def drop_modification() -> DropModificationsOutputSchema:
     if is_empty_binary_roster(roster.modification, CHAR_X):
         return DropModificationsOutputSchema(agent_output=NO_ONGOINT_MODIFICATIONS)
     else:
-        roster.modification = get_default_binary_roster(CHAR_X)
+        roster.modification = get_default_binary_schedule(CHAR_X)
         roster.save()
         return DropModificationsOutputSchema(agent_output=SUCCESSFUL_DROP_MSG)
 
@@ -158,43 +156,42 @@ def change_schedule(user_request: str) -> RosterUpdateOutputSchema:
     return RosterUpdateOutputSchema(agent_output=summary)
 
 
-def vacation_claim(user_request: str) -> VacationClaimOutputSchema:
+def vacation_sickness_claim(user_request: str) -> VacationSicknessClaimOutputSchema:
     input_data = {"question": user_request}
-    response = agent_executor_vacation.invoke(input_data)
+    response = agent_executor_sickvac.invoke(input_data)
     vacation_request = response["output"]
 
     vacation_request_json = json.dumps(
-        {"vacation": vacation_request}, indent=4)
+        {"vacation_sick": vacation_request}, indent=4)
 
-    start_date, end_date, claim, _ = get_dates_from_vacation_json(
+    start_date, end_date, claim, mode, _ = get_vacation_sick_data(
         vacation_request_json)
+    first_day_for_week, _ = get_first_and_last_day_of_week(
+        year, week_number)
 
-    first_day_for_application_week = first_day_of_week(year, week_number)
+    current_date = datetime.now().date()
+    last_day_of_sick_week = start_date + \
+        timedelta(days=(6 - start_date.weekday()))
 
-    if start_date < first_day_for_application_week:
-        msg = late_vacation_warning_msg(first_day_for_application_week)
-        return VacationClaimOutputSchema(agent_output=msg)
+    if (mode == "vacation" and start_date < first_day_for_week) or (mode == "sickness" and start_date < current_date) or (mode == "sickness" and end_date > last_day_of_sick_week):
+        msg = vacation_sickess_claim_dates_warning_msg(
+            mode, first_day_for_week, current_date, last_day_of_sick_week)
+        return VacationSicknessClaimOutputSchema(agent_output=msg)
 
-    _, vacation_week_number, vacation_first_day_of_week = start_date.isocalendar()
-    vacation_length = end_date - start_date
-    vacation_length = vacation_length.days + 1
-    claimed_vacation = get_claimed_vacation(user, year)
+    _, week, first_day_of_week = start_date.isocalendar()
+    claim_length = end_date - start_date
+    claim_length = claim_length.days + 1
 
-    if claim and claimed_vacation + vacation_length > MAX_VACATION_CLAM_PER_YEAR:
-        msg = too_much_claimed_vacation_warning_msg(
-            vacation_length, MAX_VACATION_CLAM_PER_YEAR, claimed_vacation)
-        return VacationClaimOutputSchema(agent_output=msg)
+    msg = ""
 
-    if claim:
-        replace_with = CHAR_ONE
-    else:
-        replace_with = CHAR_ZERO
+    if mode == "vacation":
+        msg = vacation_claim(user, year, week, first_day_of_week,
+                             claim, claim_length, start_date, end_date)
+    elif mode == "sickness":
+        msg = sickness_claim(user, year, week, first_day_of_week,
+                             claim_length, start_date, end_date)
 
-    save_vacation_claim(user, vacation_week_number,
-                        vacation_first_day_of_week, vacation_length, replace_with)
-
-    msg = vacation_claim_msg(claim, start_date, end_date)
-    return VacationClaimOutputSchema(agent_output=msg)
+    return VacationSicknessClaimOutputSchema(agent_output=msg)
 
 
 def schedule_optimizer() -> ScheduleOptimizationOutputSchema:
@@ -202,7 +199,7 @@ def schedule_optimizer() -> ScheduleOptimizationOutputSchema:
     warning_msg = ""
     if len(ret_val) == 2:
         warning_msg = ret_val[1]
-    status, _ = optimize_schedule()
+    status, _, _, _ = optimize_schedule()
 
     if status == pywraplp.Solver.OPTIMAL:
         msg = SOLVER_STATUS_OPTIMAL + " " + warning_msg
@@ -227,7 +224,7 @@ def reject_vacation(user_request: str) -> VacationRejectionOutputSchema:
     vacation_request = response["output"]
     vacation_request_json = json.dumps(
         {"vacation": vacation_request}, indent=4)
-    start_date, end_date, _, user_to_reject = get_dates_from_vacation_json(
+    start_date, end_date, _, user_to_reject = get_vacation_sick_data(
         vacation_request_json)
     vacation_length = end_date - start_date
     vacation_length = vacation_length.days + 1
@@ -235,7 +232,8 @@ def reject_vacation(user_request: str) -> VacationRejectionOutputSchema:
     replace_with = CHAR_ZERO
     save_vacation_claim(user_to_reject, vacation_week_number,
                         vacation_first_day_of_week, vacation_length, replace_with)
-    msg = vacation_claim_rejection_msg(user_to_reject.username)
+    msg = vacation_claim_rejection_msg(
+        user_to_reject.username, start_date, end_date)
     return VacationRejectionOutputSchema(agent_output=msg)
 
 
@@ -281,16 +279,18 @@ user_tools = [
         description=GET_SAVE_APPLICATION_MODIFICATION_DESCRIPTION,
     ),
     StructuredTool.from_function(
-        func=vacation_claim,
-        name="Application for vacation",
-        description=GET_APPLICATION_FOR_VACATION_DESCRIPTION,
+        func=vacation_sickness_claim,
+        name="Application for vacation or vacation",
+        description=GET_APPLICATION_FOR_VACATION_OR_SICKNESS_DESCRIPTION,
         input_schema=VacationClaimInputSchema
     ),
 ]
 
 converter_tools = []
 
-vacation_tools = []
+vacation_sickness_tools = []
+
+vacavtion_admin_tools = []
 
 prompt = hub.pull("davsza/crew-optimizer")
 converter_prompt = hub.pull("davsza/crew-optimizer-converter")
@@ -304,10 +304,10 @@ admin_agent = create_structured_chat_agent(
     llm=llm, tools=admin_tools, prompt=prompt)
 converter_agent = create_structured_chat_agent(
     llm=llm, tools=converter_tools, prompt=converter_prompt)
-vacation_agent = create_structured_chat_agent(
-    llm=llm, tools=vacation_tools, prompt=vacation_prompt)
+sickvac_agent = create_structured_chat_agent(
+    llm=llm, tools=vacation_sickness_tools, prompt=vacation_prompt)
 vacation_agent_admin = create_structured_chat_agent(
-    llm=llm, tools=vacation_tools, prompt=vacation_admin_prompt)
+    llm=llm, tools=vacavtion_admin_tools, prompt=vacation_admin_prompt)
 
 
 agent_executor_converter = AgentExecutor.from_agent_and_tools(
@@ -318,9 +318,9 @@ agent_executor_converter = AgentExecutor.from_agent_and_tools(
     max_iterations=3,
 )
 
-agent_executor_vacation = AgentExecutor.from_agent_and_tools(
-    agent=vacation_agent,
-    tools=vacation_tools,
+agent_executor_sickvac = AgentExecutor.from_agent_and_tools(
+    agent=sickvac_agent,
+    tools=vacation_sickness_tools,
     verbose=True,
     handle_parsing_errors=True,
     max_iterations=3,
@@ -328,7 +328,7 @@ agent_executor_vacation = AgentExecutor.from_agent_and_tools(
 
 agent_executor_vacation_admin = AgentExecutor.from_agent_and_tools(
     agent=vacation_agent_admin,
-    tools=vacation_tools,
+    tools=vacavtion_admin_tools,
     verbose=True,
     handle_parsing_errors=True,
     max_iterations=3,
