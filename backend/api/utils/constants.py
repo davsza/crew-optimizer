@@ -6,7 +6,7 @@ CHAR_ZERO = '0'
 CHAR_ONE = '1'
 CHAR_X = 'x'
 USER_INIT_MSG = """You are an AI assistant that can provide helpful answers using available tools. You will have to explain the user's upcoming week's application and modify it if needed.
-                        \nIf you are unable to answer, you can use the following tools: 'Application summarization', 'Modification', Application saving', 'Get current date/time', 'Drop ongoing modification', 'Get week number for application week', 'Application for vacation'
+                        \nIf you are unable to answer, you can use the following tools: 'Application summarization', 'Modification', Application saving', 'Get current date/time', 'Drop ongoing modification', 'Get week number for application week', 'Application for vacation or sickness'
                         You don't have to use them, if it's not mandatory"""
 ADMIN_INIT_MSG = """You are an AI assistant that can provide helpful answers using available tools. You will help a crew control member optimize the users' application to have a perfectly arranged schedule.
                     \nIf you are unable to answer, you can use the following tools: 'Schedule optimizer', 'Reject vacation'.

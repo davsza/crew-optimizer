@@ -84,7 +84,6 @@ const AdminRosterTable = ({ rostersData, application }) => {
                   application={application}
                   roster={roster}
                   day={dayIndex}
-                  user={getUsernameById(roster.owner)}
                 />
               ))}
             </tr>

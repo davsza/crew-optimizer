@@ -1,6 +1,7 @@
 import { getRosterDisplayParameters } from "../../constants";
 import "./RosterDisplay.css";
 import { getBuiltInStrings } from "../../constants";
+import RosterComponent from "../RosterComponent/RosterComponent";
 
 const RosterDisplay = ({
   scheduleOfTheDay,
@@ -22,25 +23,8 @@ const RosterDisplay = ({
         reserveCallIn[day] === "1" ? "reserveCallIn" : ""
       }`}
     >
-      {(workDays[day] === "1" || application) && vacation[day] !== "1" ? (
-        scheduleOfTheDay.map((roster, index) => {
-          const { from, to, applicationForSchedule, style } =
-            getRosterDisplayParameters(roster, index, appliedScheduleOfTheDay);
-          return (
-            <div
-              key={index}
-              className={`inner ${
-                applicationForSchedule === "1" && !application
-                  ? "application"
-                  : ""
-              }`}
-              style={style}
-            >
-              {from} - {to}
-            </div>
-          );
-        })
-      ) : reserveCallIn[day] === "1" ? (
+      {(workDays[day] === "1" || reserveCallIn[day] === "1" || application) &&
+      (vacation[day] !== "1" && sickness[day] !== "1") ? (
         scheduleOfTheDay.map((roster, index) => {
           const { from, to, applicationForSchedule, style } =
             getRosterDisplayParameters(roster, index, appliedScheduleOfTheDay);
@@ -59,61 +43,25 @@ const RosterDisplay = ({
           );
         })
       ) : sickness[day] === "1" ? (
-        <div
-          className="inner"
-          style={{
-            bottom: "0",
-            left: "0",
-            right: "0",
-            width: "90%",
-            margin: "auto",
-            backgroundColor: "orange",
-          }}
-        >
-          {getBuiltInStrings.SICKNESS}
-        </div>
+        <RosterComponent
+          content={getBuiltInStrings.SICKNESS}
+          backgroundColor="orange"
+        />
       ) : vacation[day] === "1" ? (
-        <div
-          className="inner"
-          style={{
-            bottom: "0",
-            left: "0",
-            right: "0",
-            width: "90%",
-            margin: "auto",
-            backgroundColor: "purple",
-          }}
-        >
-          {getBuiltInStrings.VACATION_CLAIM}
-        </div>
+        <RosterComponent
+          content={getBuiltInStrings.VACATION_CLAIM}
+          backgroundColor="purple"
+        />
       ) : offDays[day] === "1" ? (
-        <div
-          className="inner"
-          style={{
-            bottom: "0",
-            left: "0",
-            right: "0",
-            width: "90%",
-            margin: "auto",
-            backgroundColor: "green",
-          }}
-        >
-          {getBuiltInStrings.DAY_OFF}
-        </div>
+        <RosterComponent
+          content={getBuiltInStrings.DAY_OFF}
+          backgroundColor="green"
+        />
       ) : reserveDays[day] === "1" ? (
-        <div
-          className="inner"
-          style={{
-            bottom: "0",
-            left: "0",
-            right: "0",
-            width: "90%",
-            margin: "auto",
-            backgroundColor: "blue",
-          }}
-        >
-          {getBuiltInStrings.RESERVE}
-        </div>
+        <RosterComponent
+          content={getBuiltInStrings.RESERVE}
+          backgroundColor="blue"
+        />
       ) : (
         <div>{getBuiltInStrings.NO_SCHEDULE_TO_DISPLAY}</div>
       )}

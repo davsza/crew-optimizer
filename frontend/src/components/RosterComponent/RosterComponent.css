@@ -1,0 +1,14 @@
+.inner {
+    color: #ffffff;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 17px;
+    margin-top: 1.5px;
+    margin-bottom: 1.5px;
+    position: relative;
+  }

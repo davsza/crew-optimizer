@@ -7,7 +7,7 @@ urlpatterns = [
     path('rosters/<int:week_number>',
          views.RosterGivenWeekQuery.as_view(), name="rosters"),
     path('rosters/lastweeks/<int:week_number>',
-         views.RosterLastWeeksQuery.as_view(), name="rosters"),
+         views.RosterPreviousWeeksQuery.as_view(), name="rosters"),
     path('rosters/delete/<int:pk>',
          views.RosterDelete.as_view(), name="delete-roster"),
     path('get-user-data/', views.UserDataView.as_view(), name='get_user_data'),
