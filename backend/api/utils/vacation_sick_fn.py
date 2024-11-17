@@ -5,7 +5,7 @@ from typing import Optional, Tuple
 
 from django.contrib.auth.models import User
 
-from api.models import Roster
+from ..models import Roster
 from .date_time_fn import current_dt, get_current_week_number
 from .constants import (
     CHAR_ONE,
@@ -47,7 +47,8 @@ def get_vacation_and_sick_data(json_input: str) -> Tuple[date, date, bool, str, 
             - end_date (date): The end date of the vacation/sick leave.
             - save (bool): Whether the leave should be saved or not.
             - mode (str): The mode of the leave (e.g., vacation or sick).
-            - user (Optional[User]): The user associated with the leave, or None if no user is specified.
+            - user (Optional[User]): The user associated with the leave, or None if no user is
+                                     specified.
     """
     data = json.loads(json_input)
     vacation = data['vacation_sick']
@@ -200,7 +201,7 @@ def get_user_for_reserve(
 
     users_with_lowest_call_ins = [
         user
-        for user, reserve_call_ins in call_ins.items() 
+        for user, reserve_call_ins in call_ins.items()
         if reserve_call_ins == min_call_in
     ]
 
@@ -218,7 +219,10 @@ def get_user_for_reserve(
             current_week_rosters = Roster.objects.filter(
                 owner__in=users, week_number=week_number)
             for current_week_roster in current_week_rosters:
-                if current_week_roster.work_days[day_index - 1] == "1" and current_week_roster.schedule[(day_index - 1) * 3 + 2] == "1":
+                if (
+                    current_week_roster.work_days[day_index - 1] == "1" and
+                    current_week_roster.schedule[(day_index - 1) * 3 + 2] == "1"
+                ):
                     users_to_exclude.append(current_week_roster.owner)
 
     eligible_users = [
@@ -257,7 +261,8 @@ def sickness_claim(
     Returns:
         str: A message summarizing the sickness claim's outcome.
     """
-    sickness_claim_in_week = min(DAYS_IN_WEEK - sickness_first_day_of_week + 1, (end_date - start_date).days + 1)
+    sickness_claim_in_week = min(
+        DAYS_IN_WEEK - sickness_first_day_of_week + 1, (end_date - start_date).days + 1)
     weeks_calculated = week_number - get_current_week_number(0)
     recalculate = False
     day_off_call_in_index = -1
@@ -270,7 +275,12 @@ def sickness_claim(
         last_pos = sickness_first_day_of_week + sickness_length - 1
 
     # sickness for current and next week
-    while sickness_length > 0 and weeks_calculated < 2 and not recalculate and start_date < first_day_for_application_week:
+    while (
+        sickness_length > 0 and
+        weeks_calculated < 2 and
+        not recalculate and
+        start_date < first_day_for_application_week
+    ):
         user_roster = Roster.objects.get(owner=user, week_number=week_number)
         rosters = get_rosters_by_week(week_number)
 
@@ -282,7 +292,8 @@ def sickness_claim(
                 if user_roster.work_days[day_index] == "1":
                     shift_index = user_roster.schedule[day_index * 3:day_index * 3 + 3].index("1")
 
-                    reserve_user = get_user_for_reserve(users_for_reserve, year, week_number, day_index, shift_index)
+                    reserve_user = get_user_for_reserve(
+                        users_for_reserve, year, week_number, day_index, shift_index)
 
                     if reserve_user is None:
                         recalculate = True
@@ -406,13 +417,17 @@ def sickness_claim(
 
         for roster in rosters:
             if contains_character_from_index(roster.reserve_call_in_days, day_index + 1, "1"):
-                roster.reserve_call_in_days = roster.reserve_call_in_days[:day_index + 1] + CHAR_ZERO * (
-                    len(roster.reserve_call_in_days) - day_index - 1)
+                roster.reserve_call_in_days = (
+                    roster.reserve_call_in_days[:day_index + 1] +
+                    CHAR_ZERO * (len(roster.reserve_call_in_days) - day_index - 1)
+                )
                 roster.reserve_call_in = False
 
             if contains_character_from_index(roster.day_off_call_in_days, day_index + 1, "1"):
-                roster.day_off_call_in_days = roster.day_off_call_in_days[:day_index + 1] + CHAR_ZERO * (
-                    len(roster.day_off_call_in_days) - day_index - 1)
+                roster.day_off_call_in_days = (
+                    roster.day_off_call_in_days[:day_index + 1] +
+                    CHAR_ZERO * (len(roster.day_off_call_in_days) - day_index - 1)
+                )
                 roster.day_off_call_in = False
 
             # roster.save()
@@ -423,7 +438,8 @@ def sickness_claim(
 
     # sickness for application week
     if end_date > first_day_for_application_week:
-        remaining_sick_claim = min(sickness_length + 1, (end_date - first_day_for_application_week).days + 1)
+        remaining_sick_claim = min(
+            sickness_length + 1, (end_date - first_day_for_application_week).days + 1)
 
         application_week_number = get_current_week_number(2)
         user_roster = get_roster_by_user_and_week_number(

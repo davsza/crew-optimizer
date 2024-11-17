@@ -13,11 +13,15 @@ class Roster(models.Model):
         application (str): A string representing shift applications.
         schedule (str): A string representing the assigned shifts.
         modification (str): A string representing any modifications to the schedule.
-        work_days (str): A string indicating which days the user is scheduled to work (length = DAYS_IN_WEEK).
+        work_days (str): A string indicating which days the user is scheduled to work
+                         (length = DAYS_IN_WEEK).
         off_days (str): A string indicating which days the user has off (length = DAYS_IN_WEEK).
-        reserve_days (str): A string indicating which days the user is on reserve (length = DAYS_IN_WEEK).
-        reserve_call_in_days (str): A string indicating which days the user is on call for reserve shifts.
-        day_off_call_in_days (str): A string indicating which days the user is on call for reserve shifts.
+        reserve_days (str): A string indicating which days the user is on reserve
+                            (length = DAYS_IN_WEEK).
+        reserve_call_in_days (str): A string indicating which days the user is on call for reserve
+                                    shifts.
+        day_off_call_in_days (str): A string indicating which days the user is on call for reserve
+                                    shifts.
         vacation (str): A string indicating which days the user is on vacation.
         sickness (str): A string indicating which days the user is on sick leave.
         published (bool): A boolean indicating if the roster has been published.
@@ -27,9 +31,10 @@ class Roster(models.Model):
 
     Methods:
         __str__() -> str:
-            Returns a string representation of the Roster, typically including the week number and year.
+            Returns a string representation of the Roster, typically including the week number and
+            year.
     """
-    
+
     week_number: int
     year: int
     application: str
@@ -85,7 +90,8 @@ class Message(models.Model):
 
     Methods:
         __str__() -> str:
-            Returns a string representation of the message, typically the first 50 characters of the text.
+            Returns a string representation of the message, typically the first 50 characters of
+            the text.
     """
     text: str
     date: models.DateTimeField

@@ -1,5 +1,6 @@
 import json
 from datetime import datetime, timedelta
+from typing import Any
 
 from dotenv import load_dotenv
 from langchain import hub
@@ -79,50 +80,55 @@ from .utils.vacation_sick_fn import (
 
 load_dotenv()
 
-user = None
-year_number = -1
-week_number = -1
+USER = None
+YEAR = -1
+WEEK_NUMBER = -1
 
 
 def save_roster() -> SaveRosterOutputSchema:
     """
-    Saves the current modification to the user's schedule and resets the modification to the default schedule.
+    Saves the current modification to the user's schedule and resets the modification to the
+    default schedule.
 
-    This function checks if there are any modifications in the user's schedule. If modifications exist,
-    it applies the modifications to the application and then resets the modification to the default state.
-    If there are no modifications, it returns a message indicating there are no ongoing modifications.
+    This function checks if there are any modifications in the user's schedule. If modifications
+    exist, it applies the modifications to the application and then resets the modification to the
+    default state.
+    If there are no modifications, it returns a message indicating there are no ongoing
+    modifications.
 
     Args:
         None: This function does not take any external input parameters.
 
     Returns:
-        SaveRosterOutputSchema: A schema containing a message indicating whether the modifications were successfully saved
-        or if there were no ongoing modifications to save.
+        SaveRosterOutputSchema: A schema containing a message indicating whether the modifications
+        were successfully saved or if there were no ongoing modifications to save.
 
     Process:
         1. Retrieves the roster for the given user and week number.
         2. Checks if the current modification is uniform with a specified character (`CHAR_X`).
-        3. If no modifications are present (uniform with `CHAR_X`), returns a message indicating no ongoing modifications.
-        4. If there are modifications, applies the modification to the application, resets the modification to the default state, and saves the roster.
+        3. If no modifications are present (uniform with `CHAR_X`), returns a message indicating no
+           ongoing modifications.
+        4. If there are modifications, applies the modification to the application, resets the
+           modification to the default state, and saves the roster.
         5. Returns a success message after saving the roster.
     """
-    roster = get_roster_by_user_and_week_number(user, week_number)
+    roster = get_roster_by_user_and_week_number(USER, WEEK_NUMBER)
     if is_uniform_with_char(roster.modification, CHAR_X):
         return SaveRosterOutputSchema(agent_output=NO_ONGOINT_MODIFICATIONS)
 
-    else:
-        roster.application = overwrite_str_with_value(
-            roster.modification, roster.application)
-        roster.modification = get_default_schedule_str(CHAR_X)
-        roster.save()
-        return SaveRosterOutputSchema(agent_output=SUCCESSFUL_SAVE_MSG)
+    roster.application = overwrite_str_with_value(
+        roster.modification, roster.application)
+    roster.modification = get_default_schedule_str(CHAR_X)
+    roster.save()
+    return SaveRosterOutputSchema(agent_output=SUCCESSFUL_SAVE_MSG)
 
 
 def drop_modification() -> DropModificationsOutputSchema:
     """
     Drops any modifications to a user's schedule, restoring the default schedule.
 
-    This function checks if there are any modifications in the user's schedule for the specified week.
+    This function checks if there are any modifications in the user's schedule for the specified
+    week.
     If modifications exist, it restores the schedule to its default state, otherwise, it returns
     a message indicating there are no ongoing modifications.
 
@@ -130,24 +136,25 @@ def drop_modification() -> DropModificationsOutputSchema:
         None: This function does not take any external input parameters.
 
     Returns:
-        DropModificationsOutputSchema: A schema containing a message indicating whether the modifications were dropped
-        or if there were no ongoing modifications.
+        DropModificationsOutputSchema: A schema containing a message indicating whether the
+        modifications were dropped or if there were no ongoing modifications.
 
     Process:
         1. Retrieves the roster for the given user and week number.
         2. Checks if the current modification is uniform with a specified character (`CHAR_X`).
-        3. If the modification is uniform (i.e., no active changes), returns a message indicating no ongoing modifications.
-        4. If there are modifications, resets the modification to the default schedule and saves the roster.
+        3. If the modification is uniform (i.e., no active changes), returns a message indicating
+           no ongoing modifications.
+        4. If there are modifications, resets the modification to the default schedule and saves
+           the roster.
         5. Returns a message indicating the successful drop of modifications.
     """
-    roster = get_roster_by_user_and_week_number(user, week_number)
+    roster = get_roster_by_user_and_week_number(USER, WEEK_NUMBER)
     if is_uniform_with_char(roster.modification, CHAR_X):
         return DropModificationsOutputSchema(agent_output=NO_ONGOINT_MODIFICATIONS)
 
-    else:
-        roster.modification = get_default_schedule_str(CHAR_X)
-        roster.save()
-        return DropModificationsOutputSchema(agent_output=SUCCESSFUL_DROP_MSG)
+    roster.modification = get_default_schedule_str(CHAR_X)
+    roster.save()
+    return DropModificationsOutputSchema(agent_output=SUCCESSFUL_DROP_MSG)
 
 
 def get_application_summarization() -> SummaryOutputSchema:
@@ -170,7 +177,7 @@ def get_application_summarization() -> SummaryOutputSchema:
         4. Generates a summary of the application.
         5. Returns the summary in a structured format (SummaryOutputSchema).
     """
-    roster = get_roster_by_user_and_week_number(user, week_number)
+    roster = get_roster_by_user_and_week_number(USER, WEEK_NUMBER)
     application = roster.application
     application_json_raw = convert_roster_string_to_json(application)
     application_json = json.loads(application_json_raw)
@@ -198,7 +205,7 @@ def get_modification_summarization() -> SummaryOutputSchema:
         4. Generates a summary of the modifications.
         5. Returns the summary in a structured format (SummaryOutputSchema).
     """
-    roster = get_roster_by_user_and_week_number(user, week_number)
+    roster = get_roster_by_user_and_week_number(USER, WEEK_NUMBER)
     modification = roster.modification
     modification_json_raw = convert_roster_string_to_json(modification)
     modification_json = json.loads(modification_json_raw)
@@ -219,10 +226,12 @@ def change_schedule(user_request: str) -> RosterUpdateOutputSchema:
     6. Generates a summary of the changes and returns it.
 
     Args:
-        user_request (str): The user's request to change their schedule, containing details of the desired changes.
+        user_request (str): The user's request to change their schedule, containing details of the
+        desired changes.
 
     Returns:
-        RosterUpdateOutputSchema: A schema containing a summary of the applied changes to the roster.
+        RosterUpdateOutputSchema: A schema containing a summary of the applied changes to the
+        roster.
 
     Process:
         1. Retrieves and parses the current schedule.
@@ -231,7 +240,7 @@ def change_schedule(user_request: str) -> RosterUpdateOutputSchema:
         4. Saves the updated roster with the new modifications.
         5. Generates and returns a summary of the changes.
     """
-    roster = get_roster_by_user_and_week_number(user, week_number)
+    roster = get_roster_by_user_and_week_number(USER, WEEK_NUMBER)
     binary_application = roster.application
     application_json_raw = convert_roster_string_to_json(binary_application)
     application_json = json.loads(application_json_raw)
@@ -282,16 +291,21 @@ def vacation_sickness_claim(user_request: str) -> VacationSicknessClaimOutputSch
     4. Returning the appropriate status message for the claim.
 
     Args:
-        user_request (str): The user's request containing the vacation or sickness claim information.
+        user_request (str): The user's request containing the vacation or sickness claim
+        information.
 
     Returns:
-        VacationSicknessClaimOutputSchema: A schema containing the status message of the claim process.
+        VacationSicknessClaimOutputSchema: A schema containing the status message of the claim
+        process.
     
     Process:
-        1. Sends the user's request to an external agent to get details about the vacation or sickness.
+        1. Sends the user's request to an external agent to get details about the vacation or
+           sickness.
         2. Deserializes the response and retrieves important dates and claim details.
-        3. Checks if the claim date is valid based on the mode (vacation or sickness) and the start date.
-        4. If valid, the function proceeds to process the vacation or sickness claim and returns a response.
+        3. Checks if the claim date is valid based on the mode (vacation or sickness) and the start
+           date.
+        4. If valid, the function proceeds to process the vacation or sickness claim and returns a
+           response.
         5. If invalid, it returns an appropriate warning message.
     """
     input_data = {"question": user_request}
@@ -304,12 +318,15 @@ def vacation_sickness_claim(user_request: str) -> VacationSicknessClaimOutputSch
     start_date, end_date, claim, mode, _ = get_vacation_and_sick_data(
         vacation_request_json)
     first_day_for_application_week, _ = get_first_and_last_day_of_week(
-        year, week_number)
+        YEAR, WEEK_NUMBER)
 
     current_date = datetime.now().date()
-    last_day_of_sick_week = start_date + timedelta(days=(6 - start_date.weekday()))
+    last_day_of_sick_week = start_date + timedelta(days=6 - start_date.weekday())
 
-    if (mode == "vacation" and start_date < first_day_for_application_week) or (mode == "sickness" and start_date < current_date):
+    if (
+        (mode == "vacation" and start_date < first_day_for_application_week) or
+        (mode == "sickness" and start_date < current_date)
+    ):
         msg = get_vacation_and_sickess_claim_dates_wrong_warning_msg(
             mode, first_day_for_application_week, current_date, last_day_of_sick_week)
         return VacationSicknessClaimOutputSchema(agent_output=msg)
@@ -321,11 +338,11 @@ def vacation_sickness_claim(user_request: str) -> VacationSicknessClaimOutputSch
     msg = ""
 
     if mode == "vacation":
-        msg = vacation_claim(user, year, week, first_day_of_week,
+        msg = vacation_claim(USER, YEAR, week, first_day_of_week,
                              claim, claim_length, start_date, end_date)
 
     elif mode == "sickness":
-        msg = sickness_claim(user, year, week, first_day_of_week,
+        msg = sickness_claim(USER, YEAR, week, first_day_of_week,
                              claim_length, start_date, end_date, first_day_for_application_week)
 
     return VacationSicknessClaimOutputSchema(agent_output=msg)
@@ -340,7 +357,8 @@ def schedule_optimizer() -> ScheduleOptimizationOutputSchema:
     feasible, infeasible, or unresolved.
 
     Returns:
-        ScheduleOptimizationOutputSchema: A schema object containing the optimization status message.
+        ScheduleOptimizationOutputSchema: A schema object containing the optimization status
+        message.
 
     Process:
         1. Retrieves a list of users who have not submitted shift applications.
@@ -350,11 +368,13 @@ def schedule_optimizer() -> ScheduleOptimizationOutputSchema:
             - "OPTIMAL": Indicates the optimization was successful.
             - "FEASIBLE": The solution is feasible but may not be optimal.
             - "INFEASIBLE": No feasible solution was found.
-            - "UNBOUNDED": The solution is unbounded (i.e., there is no upper bound to the solution).
+            - "UNBOUNDED": The solution is unbounded (i.e., there is no upper bound to the
+               solution).
             - "NOT_SOLVED": The solver was not able to solve the optimization problem.
 
     Returns:
-        ScheduleOptimizationOutputSchema: Contains the message indicating the status of the optimization.
+        ScheduleOptimizationOutputSchema: Contains the message indicating the status of the
+        optimization.
     """
     ret_val = get_users_without_application()
     warning_msg = ""
@@ -367,16 +387,16 @@ def schedule_optimizer() -> ScheduleOptimizationOutputSchema:
         msg = SOLVER_STATUS_OPTIMAL + " " + warning_msg
         return ScheduleOptimizationOutputSchema(agent_output=msg)
 
-    elif status == pywraplp.Solver.FEASIBLE:
+    if status == pywraplp.Solver.FEASIBLE:
         return ScheduleOptimizationOutputSchema(agent_output=SOLVER_STATUS_FEASIBLE)
 
-    elif status == pywraplp.Solver.INFEASIBLE:
+    if status == pywraplp.Solver.INFEASIBLE:
         return ScheduleOptimizationOutputSchema(agent_output=SOLVER_STATUS_INFEASIBLE)
 
-    elif status == pywraplp.Solver.UNBOUNDED:
+    if status == pywraplp.Solver.UNBOUNDED:
         return ScheduleOptimizationOutputSchema(agent_output=SOLVER_STATUS_UNBOUNDED)
 
-    elif status == pywraplp.Solver.NOT_SOLVED:
+    if status == pywraplp.Solver.NOT_SOLVED:
         return ScheduleOptimizationOutputSchema(agent_output=SOLVER_STATUS_NOT_SOLVED)
 
 
@@ -411,7 +431,7 @@ def reject_vacation(user_request: str) -> VacationRejectionOutputSchema:
     vacation_length = vacation_length.days + 1
     _, vacation_week_number, vacation_first_day_of_week = start_date.isocalendar()
 
-    vacation_claim(user_to_reject, year, vacation_week_number,
+    vacation_claim(user_to_reject, YEAR, vacation_week_number,
                    vacation_first_day_of_week, False, vacation_length, start_date, end_date)
 
     msg = get_vacation_claim_rejection_by_admin_msg(
@@ -517,28 +537,46 @@ agent_executor_vacation_admin = AgentExecutor.from_agent_and_tools(
 )
 
 
-def call_agent(request):
-    import datetime
-
+def call_agent(request: Any) -> None:
+    """
+    Handles the incoming request, processes the message, and invokes the appropriate agent 
+    to generate a response based on the user's role (Supervisor or general user).
+    
+    The function performs the following steps:
+    1. Retrieves and processes the incoming request message.
+    2. Initializes a memory buffer for the conversation history.
+    3. Chooses the appropriate agent (admin or user) based on the user's role.
+    4. Loads past conversation history into the memory.
+    5. Sends the current message to the selected agent for a response.
+    6. Saves the response and the entire conversation (including both user and system messages).
+    
+    Args:
+        request (Any): The incoming request containing data like message text, user info, 
+                        and request-specific metadata (such as date and user).
+    
+    Returns:
+        None: This function doesn't return anything, it handles the request and 
+              updates the database and conversation memory.
+    """
     load_dotenv()
 
-    global user
-    global year
-    global week_number
+    global USER
+    global YEAR
+    global WEEK_NUMBER
 
     message = request.data.get('text')
-    user = request.user
-    year = current_year()
-    week_number = get_current_week_number(2)
+    USER = request.user
+    YEAR = current_year()
+    WEEK_NUMBER = get_current_week_number(2)
 
     msg = Message(text=message, sent_by_user=True,
-                  date=request.data.get('date'), owner=user)
+                  date=request.data.get('date'), owner=USER)
     msg.save()
 
     memory = ConversationBufferMemory(
         memory_key="chat_history", return_messages=True)
 
-    if is_user_in_group(user, 'Supervisor'):
+    if is_user_in_group(USER, 'Supervisor'):
         agent_executor = AgentExecutor.from_agent_and_tools(
             agent=admin_agent,
             tools=admin_tools,
@@ -561,7 +599,7 @@ def call_agent(request):
 
     memory.chat_memory.add_message(SystemMessage(content=initial_message))
 
-    past_messages = get_past_messages_by_user(user)
+    past_messages = get_past_messages_by_user(USER)
     for past_message in past_messages:
         message_type = HumanMessage if past_message.sent_by_user else SystemMessage
         memory.chat_memory.add_message(message_type(content=past_message.text))

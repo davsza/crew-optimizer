@@ -1,11 +1,11 @@
+from typing import Dict, Optional
+
 from django.contrib.auth.models import Group, User
 from django.http import JsonResponse
 
 from rest_framework import generics
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
-
-from typing import Dict, Optional
 
 from .agent import call_agent
 from .models import Message, Roster
@@ -24,11 +24,12 @@ class RosterGivenWeekQuery(generics.ListAPIView):
     
     Methods:
         get_queryset(self) -> QuerySet:
-            Returns the queryset of the rosters for the authenticated user and the specified week number.
+            Returns the queryset of the rosters for the authenticated user and the specified week
+            number.
     """
 
     serializer_class = RosterSerializer
-    
+
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -63,7 +64,7 @@ class RosterGivenWeekQueryAdmin(generics.ListAPIView):
     """
 
     serializer_class = RosterSerializer
-    
+
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -80,7 +81,8 @@ class RosterGivenWeekQueryAdmin(generics.ListAPIView):
         """
         week_number = self.kwargs.get('week_number')
         supervisor_group = Group.objects.get(name='Supervisor')
-        return Roster.objects.filter(week_number=week_number).exclude(owner__groups=supervisor_group)
+        return Roster.objects.filter(week_number=week_number). \
+                exclude(owner__groups=supervisor_group)
 
 
 class RosterPreviousWeeksQuery(generics.ListAPIView):
@@ -99,7 +101,7 @@ class RosterPreviousWeeksQuery(generics.ListAPIView):
     """
 
     serializer_class = RosterSerializer
-    
+
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -111,7 +113,8 @@ class RosterPreviousWeeksQuery(generics.ListAPIView):
             None
 
         Returns:
-            QuerySet: A queryset of rosters for the user for the specified week and all previous weeks.
+            QuerySet: A queryset of rosters for the user for the specified week and all previous
+                      weeks.
         """
         user = self.request.user
         week_number = self.kwargs.get('week_number')
@@ -125,18 +128,20 @@ class MessageListCreate(generics.ListCreateAPIView):
     and can create new messages which will be associated with their account.
 
     Attributes:
-        serializer_class (Type[MessageSerializer]): The serializer used to convert the message data.
+        serializer_class (Type[MessageSerializer]): The serializer used to convert the message
+                                                    data.
         permission_classes (list): A list of permissions required to access the view.
 
     Methods:
         get_queryset(self) -> QuerySet:
-            Returns the queryset of messages for the authenticated user, ordered by ID in descending order.
+            Returns the queryset of messages for the authenticated user, ordered by ID in
+            descending order.
         perform_create(self, serializer) -> None:
             Saves the message with the authenticated user as the owner.
     """
 
     serializer_class = MessageSerializer
-    
+
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -147,7 +152,8 @@ class MessageListCreate(generics.ListCreateAPIView):
             None
 
         Returns:
-            QuerySet: A queryset of messages for the authenticated user, ordered by ID in descending order.
+            QuerySet: A queryset of messages for the authenticated user, ordered by ID in
+                      descending order.
         """
         user = self.request.user
         return Message.objects.filter(owner=user).order_by('-id')
@@ -157,7 +163,8 @@ class MessageListCreate(generics.ListCreateAPIView):
         Saves the new message with the authenticated user as the owner.
 
         Args:
-            serializer (MessageSerializer): The serializer containing the validated data for the new message.
+            serializer (MessageSerializer): The serializer containing the validated data for the
+                                            new message.
 
         Returns:
             None
@@ -182,7 +189,7 @@ class RosterListCreate(generics.ListCreateAPIView):
     """
 
     serializer_class = RosterSerializer
-    
+
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -203,7 +210,8 @@ class RosterListCreate(generics.ListCreateAPIView):
         Saves the new roster with the authenticated user as the owner.
 
         Args:
-            serializer (RosterSerializer): The serializer containing the validated data for the new roster.
+            serializer (RosterSerializer): The serializer containing the validated data for the
+                                           new roster.
 
         Returns:
             None
@@ -227,7 +235,7 @@ class RosterDelete(generics.DestroyAPIView):
     """
 
     serializer_class = RosterSerializer
-    
+
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -250,8 +258,10 @@ class CreateUserView(generics.CreateAPIView):
 
     Attributes:
         queryset (QuerySet): The queryset of all User objects.
-        serializer_class (Type[UserSerializer]): The serializer used for validating and creating a new user.
-        permission_classes (list): The permission classes that define the access level for this view.
+        serializer_class (Type[UserSerializer]): The serializer used for validating and creating a
+                                                 new user.
+        permission_classes (list): The permission classes that define the access level for this
+                                   view.
 
     Methods:
         perform_create(self, serializer):
@@ -261,9 +271,9 @@ class CreateUserView(generics.CreateAPIView):
     queryset = User.objects.all()
     
     serializer_class = UserSerializer
-    
+
     permission_classes = [AllowAny]
-    
+
     def perform_create(self, serializer) -> None:
         """
         Creates a new user and saves the instance using the provided serializer.
@@ -314,7 +324,7 @@ class UserDataView(APIView):
         return JsonResponse({'error': 'User is not authenticated'}, status=401)
 
 
-def get_user_details(request) -> JsonResponse:
+def get_user_details() -> JsonResponse:
     """
     Retrieves a list of users excluding those in the 'Supervisor' group.
 
@@ -350,7 +360,7 @@ class AgentView(APIView):
     Methods:
         post: Calls the agent function with the request and returns an empty JSON response.
     """
-    
+
     def post(self, request) -> JsonResponse:
         """
         Handle POST requests to trigger the agent function.

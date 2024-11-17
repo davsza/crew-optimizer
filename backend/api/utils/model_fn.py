@@ -1,12 +1,12 @@
+from typing import Optional, Tuple, Union
+
 from django.contrib.auth.models import Group, User
 from django.db.models.query import QuerySet
 
-from api.models import Message, Roster
-from .date_time_fn import get_current_week_number
-from .common_fn import is_uniform_with_char
+from ..models import Message, Roster
 from .constants import CHAR_ZERO
-
-from typing import Optional, Tuple, Union
+from .common_fn import is_uniform_with_char
+from .date_time_fn import get_current_week_number
 
 
 
@@ -92,22 +92,23 @@ def get_roster_by_user_and_week_number(user: User, week_number: int) -> Optional
         week_number (int): The week number for which the roster is required.
 
     Returns:
-        Optional[Roster]: The roster object if found, or None if no roster exists for the user and week number.
+        Optional[Roster]: The roster object if found, or None if no roster exists for the user and
+                          week number.
     """
     try:
         roster = Roster.objects.get(owner=user, week_number=week_number)
         return roster
     except Roster.DoesNotExist:
         return None
-    
-    
+
+
 def get_users_without_application() -> Tuple[bool, Union[str, None]]:
     """
     Retrieve the users who do not have any application for the current week.
 
-    This function identifies users who are not part of the 'Supervisor' group and checks their roster 
-    for the current week (with a 2-week offset). If a user has no application (represented by '0' 
-    in the roster string), they are added to the list.
+    This function identifies users who are not part of the 'Supervisor' group and checks their
+    roster for the current week (with a 2-week offset). If a user has no application (represented
+    by '0' in the roster string), they are added to the list.
 
     Returns:
         Tuple[bool, Union[str, None]]: A tuple where the first element is a boolean indicating
@@ -132,23 +133,13 @@ def get_users_without_application() -> Tuple[bool, Union[str, None]]:
             continue
 
     if user_list:
-        return (True, f"Warning! The following users don't have any application: {', '.join(user_list)}" if len(user_list) > 1 else f"The following user doesn't have any application: {user_list[0]}")
-    else:
-        return (False,)
-    
-    
-def is_user_in_group(user: User, group_name: str) -> bool:
-    """
-    Check if a user belongs to a specific group.
-
-    This function checks whether the given user is a member of the group specified
-    by the `group_name` parameter.
-
-    Args:
-        user (User): The user to check.
-        group_name (str): The name of the group to check membership against.
-
-    Returns:
-        bool: True if the user is a member of the specified group, False otherwise.
-    """
-    return user.groups.filter(name=group_name).exists()
+        if len(user_list) > 1:
+            return (
+                True,
+                f"Warning! The following users don't have any application: {', '.join(user_list)}"
+            )
+        return (
+            True,
+            f"The following user doesn't have any application: {user_list[0]}"
+        )
+    return (False,)

@@ -1,5 +1,6 @@
 import json
 from typing import Dict
+
 from .constants import CHAR_ONE, CHAR_ZERO
 
 
@@ -55,7 +56,8 @@ def convert_roster_string_to_json(roster_str: str) -> str:
         roster_str (str): A string of length 21 representing the shifts for each day of the week.
 
     Returns:
-        str: A JSON string representing the roster with morning, afternoon, and night shifts for each day.
+        str: A JSON string representing the roster with morning, afternoon, and night shifts for
+             each day.
     """
     days = ["monday", "tuesday", "wednesday",
             "thursday", "friday", "saturday", "sunday"]
@@ -64,9 +66,18 @@ def convert_roster_string_to_json(roster_str: str) -> str:
     for i, day in enumerate(days):
         start_index = i * 3
         ret_json[day] = {
-            "morning": True if roster_str[start_index] == "1" else (None if roster_str[start_index] == "x" else False),
-            "afternoon": True if roster_str[start_index + 1] == "1" else (None if roster_str[start_index + 1] == "x" else False),
-            "night": True if roster_str[start_index + 2] == "1" else (None if roster_str[start_index + 2] == "x" else False)
+            "morning": (
+                True if roster_str[start_index] == "1"
+                else (None if roster_str[start_index] == "x" else False)
+            ),
+            "afternoon": (
+                True if roster_str[start_index + 1] == "1"
+                else (None if roster_str[start_index + 1] == "x" else False)
+            ),
+            "night": (
+                True if roster_str[start_index + 2] == "1"
+                else (None if roster_str[start_index + 2] == "x" else False)
+            )
         }
 
     return json.dumps({"roster": ret_json}, indent=4)
@@ -79,11 +90,13 @@ def convert_json_to_roster_string(roster_json: Dict, parse_none_as_x: bool = Fal
     The function processes a JSON object representing a weekly roster, extracting the shifts 
     for each day and converting them into a 21-character string where each 3 characters 
     represent the morning, afternoon, and night shifts for each day. 
-    '1' represents a scheduled shift, '0' represents no shift, and 'x' is used if None is encountered (optional).
+    '1' represents a scheduled shift, '0' represents no shift, and 'x' is used if None is
+    encountered (optional).
 
     Args:
         roster_json (dict): A JSON object containing the roster with shifts for each day.
-        parse_none_as_x (bool, optional): If True, None values are represented as 'x' instead of '0'. Defaults to False.
+        parse_none_as_x (bool, optional): If True, None values are represented as 'x' instead
+        of '0'. Defaults to False.
 
     Returns:
         str: A 21-character string representing the shifts for the entire week.
@@ -114,7 +127,8 @@ def order_json_by_days(roster_json: Dict[str, dict]) -> Dict[str, dict]:
     Any day not present in the input JSON will be skipped.
 
     Args:
-        roster_json (dict): A dictionary where the keys are days of the week and the values are shift data.
+        roster_json (dict): A dictionary where the keys are days of the week and the values ar
+                            shift data.
 
     Returns:
         dict: A new dictionary with the days ordered from Monday to Sunday.
@@ -166,12 +180,14 @@ def overwrite_str_with_value(original_binary: str, replace_with: str) -> str:
     """
     Overwrite characters in the original binary string with characters from the replacement string.
 
-    This function iterates over the original binary string, and if the character is either '0' or '1',
-    it remains unchanged. Otherwise, the character from the `replace_with` string is used as a replacement.
+    This function iterates over the original binary string, and if the character is either
+    '0' or '1', it remains unchanged. Otherwise, the character from the `replace_with` string is
+    used as a replacement.
 
     Args:
         original_binary (str): The original binary string containing '0' or '1'.
-        replace_with (str): The string to use for replacement when a non-'0' or '1' character is encountered.
+        replace_with (str): The string to use for replacement when a non-'0' or '1' character is
+                            encountered.
 
     Returns:
         str: A new string with the replaced characters from the `replace_with` string.
@@ -187,7 +203,12 @@ def overwrite_str_with_value(original_binary: str, replace_with: str) -> str:
     return application_summary_result
 
 
-def replace_string_from_to_with_char(binary_to_replace: str, from_pos: int, to_pos: int, character: str) -> str:
+def replace_string_from_to_with_char(
+    binary_to_replace: str,
+    from_pos: int,
+    to_pos: int,
+    character: str
+) -> str:
     """
     Replace a portion of a binary string with a specified character.
 
@@ -263,8 +284,10 @@ def max_consecutive_days_in_roster(
     occurrences of the specified character. It returns the maximum length of such a sequence.
 
     Args:
-        roster (str): A string representing the roster, where each character represents a day or shift.
-        character_to_find (str): The character to search for in the roster (e.g., '1' for a shift or 'x' for absence).
+        roster (str): A string representing the roster, where each character represents a day or
+                      shift.
+        character_to_find (str): The character to search for in the roster(e.g., '1' for a shift
+                                 or 'x' for absence).
 
     Returns:
         int: The maximum number of consecutive days with the specified character.
@@ -286,7 +309,8 @@ def max_consecutive_days_in_roster(
 
 def contains_character_from_index(s: str, index: int, char: str) -> bool:
     """
-    Checks if the string contains the specified character between the given index and the end of the string.
+    Checks if the string contains the specified character between the given index and the end of
+    the string.
 
     Parameters:
         s (str): The input string.
@@ -294,7 +318,8 @@ def contains_character_from_index(s: str, index: int, char: str) -> bool:
         char (str): The character to search for.
 
     Returns:
-        bool: True if the character is found between the index and the end of the string, False otherwise.
+        bool: True if the character is found between the index and the end of the string, False
+              otherwise.
     """
     return char in s[index:]
 
@@ -314,7 +339,7 @@ def merge_roster_strings(s1: str, s2: str, s3: str) -> str:
     """
     merged = ''.join('1'
                      if char1 == '1' or char2 == '1' or char3 == '1'
-                     else '0' 
+                     else '0'
                      for char1, char2, char3 in zip(s1, s2, s3)
                     )
     return merged

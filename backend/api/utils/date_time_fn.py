@@ -24,7 +24,7 @@ def get_current_week_number(additional_week: int) -> int:
     """
     today = current_dt()
     iso_calendar = today.isocalendar()
-    current_week_number = iso_calendar[1] 
+    current_week_number = iso_calendar[1]
     return current_week_number + additional_week
 
 
@@ -38,7 +38,7 @@ def current_year() -> int:
         int: The current year as an integer.
     """
     today = current_dt()
-    
+
     return today.year
 
 
@@ -55,7 +55,8 @@ def get_first_and_last_day_of_week(year: int, week: int) -> Tuple[date, date]:
         week (int): The week number (1-52 or 1-53) for which the first and last days are needed.
 
     Returns:
-        Tuple[date, date]: A tuple containing the first and last day of the given week as `date` objects.
+        Tuple[date, date]: A tuple containing the first and last day of the given week as `date`
+                           objects.
     """
     first_day_of_year = datetime(year, 1, 1)
     first_monday = first_day_of_year + timedelta(days=(7 - first_day_of_year.weekday()) % 7)

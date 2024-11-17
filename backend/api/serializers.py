@@ -18,9 +18,25 @@ class UserSerializer(serializers.ModelSerializer):
     """
 
     class Meta:
+        """
+        Meta class for UserSerializer.
+
+        This inner class defines the configuration for the serializer, specifying 
+        the model to be serialized and the fields to include in the serialized output.
+
+        Attributes:
+            model (Model): The Django model that this serializer is associated with. 
+                            In this case, it is the `User` model.
+            fields (list): A list of field names that should be included in the serialized data. 
+                           Here, the fields are 'id', 'username', and 'password'.
+            extra_kwargs (dict): A dictionary of extra keyword arguments to customize 
+                                  field-level behaviors. In this case, the password field is 
+                                  marked as write-only, meaning it will not be included in 
+                                  serialized output but can be set during user creation.
+        """
         model = User
         fields = ["id", "username", "password"]
-        extra_kwargs = {"password": {"write_only": True}}  # Corrected typo from extra_knwargs to extra_kwargs
+        extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data: dict) -> User:
         """
@@ -66,6 +82,24 @@ class RosterSerializer(serializers.ModelSerializer):
     """
 
     class Meta:
+        """
+        Meta class for RosterSerializer.
+
+        This inner class defines the configuration for the serializer, including the model 
+        to be serialized, the fields that should be included in the serialized output, 
+        and additional customization of field behaviors.
+
+        Attributes:
+            model (Model): The Django model that this serializer is associated with. 
+                            In this case, it is the `Roster` model.
+            fields (list): A list of field names that should be included in the serialized data. 
+                           It includes various roster-related fields such as `week_number`, 
+                           `schedule`, `work_days`, etc.
+            extra_kwargs (dict): A dictionary of extra keyword arguments to customize 
+                                  field-level behaviors. Here, the `owner` field is marked 
+                                  as read-only, meaning it cannot be modified during 
+                                  serialization but can be included in the output.
+        """
         model = Roster
         fields = [
             "id", "week_number", "year", "application", "schedule", "work_days", 
@@ -89,8 +123,25 @@ class MessageSerializer(serializers.ModelSerializer):
         sent_by_user (bool): Indicates whether the message was sent by a user.
         owner (User): The owner (user) associated with the message, read-only.
     """
-    
+
     class Meta:
+        """
+        Meta class for MessageSerializer.
+
+        This inner class configures the serializer for the `Message` model. It defines which fields 
+        are serialized, and provides additional customizations such as marking fields as read-only.
+
+        Attributes:
+            model (Model): The Django model that this serializer is associated with. 
+                            In this case, it is the `Message` model.
+            fields (list): A list of field names to include in the serialized data. 
+                           It includes fields such as `id`, `text`, `date`, `sent_by_user`,
+                           and `owner`.
+            extra_kwargs (dict): A dictionary of extra keyword arguments to customize 
+                                  the behavior of specific fields. The `owner` field is marked 
+                                  as read-only, meaning it will be included in the serialized output 
+                                  but cannot be modified when creating or updating a `Message`.
+        """
         model = Message
         fields = ["id", "text", "date", "sent_by_user", "owner"]
         extra_kwargs = {"owner": {"read_only": True}}
