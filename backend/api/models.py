@@ -17,10 +17,12 @@ class Roster(models.Model):
         off_days (str): A string indicating which days the user has off (length = DAYS_IN_WEEK).
         reserve_days (str): A string indicating which days the user is on reserve (length = DAYS_IN_WEEK).
         reserve_call_in_days (str): A string indicating which days the user is on call for reserve shifts.
+        day_off_call_in_days (str): A string indicating which days the user is on call for reserve shifts.
         vacation (str): A string indicating which days the user is on vacation.
         sickness (str): A string indicating which days the user is on sick leave.
         published (bool): A boolean indicating if the roster has been published.
         reserve_call_in (bool): A boolean indicating if the user is on call for reserve shifts.
+        day_off_call_in (bool): A boolean indicating if the user is on call for reserve shifts.
         owner (User): The user associated with the roster (foreign key to the User model).
 
     Methods:
@@ -37,10 +39,12 @@ class Roster(models.Model):
     off_days: str
     reserve_days: str
     reserve_call_in_days: str
+    day_off_call_in_days: str
     vacation: str
     sickness: str
     published: bool
     reserve_call_in: bool
+    day_off_call_in: bool
     owner: models.ForeignKey
 
     week_number = models.IntegerField()
@@ -52,10 +56,12 @@ class Roster(models.Model):
     off_days = models.CharField(max_length=DAYS_IN_WEEK)
     reserve_days = models.CharField(max_length=DAYS_IN_WEEK)
     reserve_call_in_days = models.CharField(max_length=DAYS_IN_WEEK)
+    day_off_call_in_days = models.CharField(max_length=DAYS_IN_WEEK)
     vacation = models.CharField(max_length=DAYS_IN_WEEK)
     sickness = models.CharField(max_length=DAYS_IN_WEEK)
     published = models.BooleanField(default=False)
     reserve_call_in = models.BooleanField(default=False)
+    day_off_call_in = models.BooleanField(default=False)
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="shifts")
 
     def __str__(self) -> str:

@@ -105,41 +105,80 @@ def get_summary(
                     current_modification_cancellation_summary_result.append(day_cancellation_summary)
 
             if current_modification_application_summary_result and current_modification_cancellation_summary_result:
-                ret_val = "You have applied for: " + ', '.join(current_modification_application_summary_result) + "; and cancelled: " + ', '.join(current_modification_cancellation_summary_result) + ". With that, your ongoing applications are " + ', '.join(
-                    full_modification_application_summary_result) + "; and cancellations are " + ', '.join(full_modification_cancellation_summary_result) + ". Would you like to modify it any further, or save them?"
-            elif current_modification_application_summary_result:
-                ret_val = "You have applied for: " + ', '.join(current_modification_application_summary_result) + \
-                    ". With that, your ongoing applications are: " + \
-                    ', '.join(full_modification_application_summary_result)
-                if full_modification_cancellation_summary_result:
-                    ret_val += "; and cancellations are: " + \
-                        ', '.join(
-                            full_modification_cancellation_summary_result)
-                ret_val += ". Would you like to modify it any further, or save them?"
-            elif current_modification_cancellation_summary_result:
-                ret_val = "You have canceled for: " + \
-                    ', '.join(current_modification_cancellation_summary_result) + \
-                    ". With that, your ongoing "
-                if full_modification_application_summary_result:
-                    ret_val += "applications are: " + \
-                        ', '.join(
-                            full_modification_application_summary_result) + "; and "
-                ret_val += "cancellations are: " + \
-                    ', '.join(full_modification_cancellation_summary_result) + \
+                ret_val = (
+                    "You have applied for: " +
+                    ', '.join(current_modification_application_summary_result) +
+                    "; and cancelled: " + ', '.join(current_modification_cancellation_summary_result) +
+                    ". With that, your ongoing applications are " +
+                    ', '.join(
+                    full_modification_application_summary_result) +
+                    "; and cancellations are " +
+                    ', '.join(full_modification_cancellation_summary_result) +
                     ". Would you like to modify it any further, or save them?"
+                )
+                
+            elif current_modification_application_summary_result:
+                ret_val = (
+                    "You have applied for: " +
+                    ', '.join(current_modification_application_summary_result) +
+                    ". With that, your ongoing applications are: " +
+                    ', '.join(full_modification_application_summary_result)
+                )
+                
+                if full_modification_cancellation_summary_result:
+                    ret_val += (
+                        "; and cancellations are: " +
+                        ', '.join(full_modification_cancellation_summary_result)
+                    )
+                    
+                ret_val += (
+                    ". Would you like to modify it any further, or save them?"
+                )
+                
+            elif current_modification_cancellation_summary_result:
+                ret_val = (
+                    "You have canceled for: " +
+                    ', '.join(current_modification_cancellation_summary_result) +
+                    ". With that, your ongoing "
+                )
+
+                if full_modification_application_summary_result:
+                    ret_val += (
+                        "applications are: " +
+                        ', '.join(full_modification_application_summary_result) +
+                        "; and "
+                    )
+
+                ret_val += (
+                    "cancellations are: " +
+                    ', '.join(full_modification_cancellation_summary_result) +
+                    ". Would you like to modify it any further, or save them?"
+                )
+
         else:
             if full_modification_application_summary_result:
-                ret_val = "Your ongoing applications are: " + ', '.join(
-                    full_modification_application_summary_result)
+                ret_val = (
+                    "Your ongoing applications are: " +
+                    ', '.join(full_modification_application_summary_result)
+                )
+
                 if full_modification_cancellation_summary_result:
-                    ret_val += "; and cancellations are: " + \
-                        ', '.join(
-                            full_modification_cancellation_summary_result) + ". Would you like to modify it any further, or save them?"
+                    ret_val += (
+                        "; and cancellations are: " +
+                        ', '.join(full_modification_cancellation_summary_result) + ". Would you like to modify it any further, or save them?"
+                    )
+
             elif full_modification_cancellation_summary_result:
-                ret_val = "Your ongoing cancellations are: " + ', '.join(
-                    full_modification_cancellation_summary_result) + ". Would you like to modify it any further, or save them?"
+                ret_val = (
+                    "Your ongoing cancellations are: " +
+                    ', '.join(full_modification_cancellation_summary_result) +
+                    ". Would you like to modify it any further, or save them?"
+                )
+
             else:
-                ret_val = "You don't have any ongoing modifications. If you'd like to change anything, please let me know!"
+                ret_val = (
+                    "You don't have any ongoing modifications. If you'd like to change anything, please let me know!"
+                )
 
     return ret_val
 

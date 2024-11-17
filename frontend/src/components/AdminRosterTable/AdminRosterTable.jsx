@@ -18,6 +18,7 @@ const RenderRosters = ({ application, roster, day }) => {
   const vacation = roster.vacation;
   const sickness = roster.sickness;
   const reserveCallIn = roster.reserve_call_in_days;
+  const dayOffCallIn = roster.day_off_call_in_days;
   const published = roster.published;
   return (
     <td key={day}>
@@ -31,6 +32,7 @@ const RenderRosters = ({ application, roster, day }) => {
         vacation={vacation}
         sickness={sickness}
         reserveCallIn={reserveCallIn}
+        dayOffCallIn={dayOffCallIn}
         published={published}
         day={day}
         application={application}

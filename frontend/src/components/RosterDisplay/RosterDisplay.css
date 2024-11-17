@@ -35,7 +35,11 @@
 }
 
 .reserveCallIn {
-  background-color: #ffaaaa;
+  background-color: #8bc3ff;
+}
+
+.dayOffCallIn {
+  background-color: #8bc3ff;
 }
 
 .application {

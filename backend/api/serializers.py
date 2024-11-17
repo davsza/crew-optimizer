@@ -56,10 +56,12 @@ class RosterSerializer(serializers.ModelSerializer):
         off_days (str): A string representing the off days for the roster.
         reserve_days (str): A string representing the reserve days for the roster.
         reserve_call_in_days (str): A string representing the reserve call-in days for the roster.
+        day_off_call_in_days (str): A string representing the day off call-in days for the roster.
         vacation (str): A string representing the vacation days for the roster.
         sickness (str): A string representing the sickness days for the roster.
         published (bool): A flag indicating whether the roster is published.
         reserve_call_in (bool): A flag indicating if a call-in is needed for reserve days.
+        day_off_call_in (bool): A flag indicating if a call-in is needed for day off days.
         owner (User): The user who owns the roster, read-only.
     """
 
@@ -67,8 +69,8 @@ class RosterSerializer(serializers.ModelSerializer):
         model = Roster
         fields = [
             "id", "week_number", "year", "application", "schedule", "work_days", 
-            "off_days", "reserve_days", "reserve_call_in_days", "vacation", 
-            "sickness", "published", "reserve_call_in", "owner"
+            "off_days", "reserve_days", "reserve_call_in_days", "day_off_call_in_days", "vacation", 
+            "sickness", "published", "reserve_call_in", "day_off_call_in", "owner"
         ]
         extra_kwargs = {"owner": {"read_only": True}}
 

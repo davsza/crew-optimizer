@@ -12,7 +12,7 @@ def current_dt() -> datetime:
     return datetime.now()
 
 
-def get_current_week(additional_week: int) -> int:
+def get_current_week_number(additional_week: int) -> int:
     """
     Calculate the week number for the current date, with an optional adjustment.
 
@@ -58,11 +58,7 @@ def get_first_and_last_day_of_week(year: int, week: int) -> Tuple[date, date]:
         Tuple[date, date]: A tuple containing the first and last day of the given week as `date` objects.
     """
     first_day_of_year = datetime(year, 1, 1)
-    
     first_monday = first_day_of_year + timedelta(days=(7 - first_day_of_year.weekday()) % 7)
-    
     first_day = first_monday + timedelta(weeks=week - 1)
-    
     last_day = first_day + timedelta(days=6)
-    
     return first_day.date(), last_day.date()

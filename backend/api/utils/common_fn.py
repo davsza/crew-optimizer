@@ -57,9 +57,10 @@ def convert_roster_string_to_json(roster_str: str) -> str:
     Returns:
         str: A JSON string representing the roster with morning, afternoon, and night shifts for each day.
     """
-    days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+    days = ["monday", "tuesday", "wednesday",
+            "thursday", "friday", "saturday", "sunday"]
     ret_json = {}
-    
+
     for i, day in enumerate(days):
         start_index = i * 3
         ret_json[day] = {
@@ -87,14 +88,15 @@ def convert_json_to_roster_string(roster_json: Dict, parse_none_as_x: bool = Fal
     Returns:
         str: A 21-character string representing the shifts for the entire week.
     """
-    days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+    days = ["monday", "tuesday", "wednesday",
+            "thursday", "friday", "saturday", "sunday"]
     values_string = ""
 
     for day in days:
         roster = roster_json["roster"].get(day, {})
         for shift in ['morning', 'afternoon', 'night']:
             value = roster.get(shift, None)
-            
+
             if parse_none_as_x and value is None:
                 values_string += "x"
             else:
@@ -117,10 +119,11 @@ def order_json_by_days(roster_json: Dict[str, dict]) -> Dict[str, dict]:
     Returns:
         dict: A new dictionary with the days ordered from Monday to Sunday.
     """
-    days_of_week = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
-    
+    days_of_week = ["monday", "tuesday", "wednesday",
+                    "thursday", "friday", "saturday", "sunday"]
+
     ordered_json = {day: roster_json[day] for day in days_of_week if day in roster_json}
-    
+
     return ordered_json
 
 
@@ -139,7 +142,8 @@ def complement_roster(roster_json: str) -> Dict:
     Returns:
         dict: The updated roster JSON with all shifts for all days, including missing shifts.
     """
-    days_of_week = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+    days_of_week = ["monday", "tuesday", "wednesday",
+                    "thursday", "friday", "saturday", "sunday"]
     default_shifts = {"morning": None, "afternoon": None, "night": None}
 
     input_json = json.loads(roster_json)
@@ -161,7 +165,7 @@ def complement_roster(roster_json: str) -> Dict:
 def overwrite_str_with_value(original_binary: str, replace_with: str) -> str:
     """
     Overwrite characters in the original binary string with characters from the replacement string.
-    
+
     This function iterates over the original binary string, and if the character is either '0' or '1',
     it remains unchanged. Otherwise, the character from the `replace_with` string is used as a replacement.
 
@@ -249,7 +253,7 @@ def get_day_mapping(days: list, start: int, end: int) -> dict:
 
 
 def max_consecutive_days_in_roster(
-    roster_str: str, 
+    roster_str: str,
     character_to_find: str
 ) -> int:
     """
@@ -278,3 +282,39 @@ def max_consecutive_days_in_roster(
     max_count = max(max_count, current_count)
 
     return max_count
+
+
+def contains_character_from_index(s: str, index: int, char: str) -> bool:
+    """
+    Checks if the string contains the specified character between the given index and the end of the string.
+
+    Parameters:
+        s (str): The input string.
+        index (int): The starting index to check from.
+        char (str): The character to search for.
+
+    Returns:
+        bool: True if the character is found between the index and the end of the string, False otherwise.
+    """
+    return char in s[index:]
+
+
+def merge_roster_strings(s1: str, s2: str, s3: str) -> str:
+    """
+    Merges three binary strings such that the result has '1' at any index
+    where either of the input strings has a '1'.
+
+    Parameters:
+        s1 (str): First binary string.
+        s2 (str): Second binary string.
+        s3 (str): Third binary string.
+
+    Returns:
+        str: Merged binary string.
+    """
+    merged = ''.join('1'
+                     if char1 == '1' or char2 == '1' or char3 == '1'
+                     else '0' 
+                     for char1, char2, char3 in zip(s1, s2, s3)
+                    )
+    return merged

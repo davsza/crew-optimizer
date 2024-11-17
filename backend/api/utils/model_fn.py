@@ -2,7 +2,7 @@ from django.contrib.auth.models import Group, User
 from django.db.models.query import QuerySet
 
 from api.models import Message, Roster
-from .date_time_fn import get_current_week
+from .date_time_fn import get_current_week_number
 from .common_fn import is_uniform_with_char
 from .constants import CHAR_ZERO
 
@@ -118,7 +118,7 @@ def get_users_without_application() -> Tuple[bool, Union[str, None]]:
     users = User.objects.exclude(groups=supervisor_group)
     user_list = []
 
-    week_number = get_current_week(2)
+    week_number = get_current_week_number(2)
 
     for user in users:
         try:

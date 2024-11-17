@@ -13,6 +13,7 @@ const RosterDisplay = ({
   vacation,
   sickness,
   reserveCallIn,
+  dayOffCallIn,
   published,
   day,
   application,
@@ -21,10 +22,11 @@ const RosterDisplay = ({
     <div
       className={`outer ${highlighted ? "highlighted" : ""} ${
         reserveCallIn[day] === "1" ? "reserveCallIn" : ""
-      }`}
+      } ${dayOffCallIn[day] === "1" ? "dayOffCallIn" : ""}`}
     >
       {(workDays[day] === "1" || reserveCallIn[day] === "1" || application) &&
-      (vacation[day] !== "1" && sickness[day] !== "1") ? (
+      vacation[day] !== "1" &&
+      sickness[day] !== "1" ? (
         scheduleOfTheDay.map((roster, index) => {
           const { from, to, applicationForSchedule, style } =
             getRosterDisplayParameters(roster, index, appliedScheduleOfTheDay);

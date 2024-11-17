@@ -54,6 +54,7 @@ const RosterTable = ({ roster, application }) => {
           const vacation = roster.vacation;
           const sickness = roster.sickness;
           const reserveCallIn = roster.reserve_call_in_days;
+          const dayOffCallIn = roster.day_off_call_in_days;
           const published = roster.published;
           const displayDate = datePlusDays(startDate, day);
           const currDay = new Date();
@@ -80,6 +81,7 @@ const RosterTable = ({ roster, application }) => {
                     vacation={vacation}
                     sickness={sickness}
                     reserveCallIn={reserveCallIn}
+                    dayOffCallIn={dayOffCallIn}
                     published={published}
                     day={day}
                     application={application}
