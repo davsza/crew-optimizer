@@ -218,8 +218,8 @@ def reoptimize_schedule_after_sickness(
             p_reserve[worker, day] = solver.BoolVar(
                 f'p_reserve[{worker},{day}]')
 
-    shift_range = day_index * 3 + 1
-    day_range = day_index + 1
+    shift_range = (day_index - 1) * 3 + 1
+    day_range = day_index
 
     for worker in workers:
         # Fix variables until the day index
@@ -266,9 +266,9 @@ def reoptimize_schedule_after_sickness(
             coefficient = float(reserve_days[worker][day])
             objective.SetCoefficient(var_reserve_days[worker, day], coefficient)
 
-            objective.SetCoefficient(p_work_days[worker, day], e)
-            objective.SetCoefficient(p_off_days[worker, day], f)
-            objective.SetCoefficient(p_reserve[worker, day], g)
+            objective.SetCoefficient(p_work_days[worker, day], -e)
+            objective.SetCoefficient(p_off_days[worker, day], -f)
+            objective.SetCoefficient(p_reserve[worker, day], -g)
 
     objective.SetMaximization()
 
@@ -305,20 +305,25 @@ def reoptimize_schedule_after_sickness(
         sw_number_of_work_days = min(4, 7 - sw_vac_sick_sum)
         sw_number_of_off_days = max(2 - sw_vac_sick_sum, 0)
         sw_number_of_reserve_days = 1 if sw_vac_sick_sum < 3 else 0
+        
+        for day in DAYS_INDEX_1_14:
+            solver.Add(p_work_days[worker, day] >= 0)
+            solver.Add(p_off_days[worker, day] >= 0)
+            solver.Add(p_reserve[worker, day] >= 0)
 
         # Cut on second week
         if day_index > 7:
             # Define work days
-            solver.Add(sum((var_work_days[worker, day] + p_work_days[worker, day])
-                       for day in DAYS_INDEX_8_14) >= sw_number_of_work_days)
+            solver.Add(sum((var_work_days[worker, day] - p_work_days[worker, day])
+                       for day in DAYS_INDEX_8_14) == sw_number_of_work_days)
 
             # Define off days
             solver.Add(sum((var_off_days[worker, day] + p_off_days[worker, day])
-                       for day in DAYS_INDEX_8_14) >= sw_number_of_off_days)
+                       for day in DAYS_INDEX_8_14) == sw_number_of_off_days)
 
             # Define reserve days
             solver.Add(sum((var_reserve_days[worker, day] + p_reserve[worker, day])
-                       for day in DAYS_INDEX_8_14) >= sw_number_of_reserve_days)
+                       for day in DAYS_INDEX_8_14) == sw_number_of_reserve_days)
 
             # Each day must have at least 2 reserve workers
             for day in range(day_index, 15):
@@ -328,20 +333,20 @@ def reoptimize_schedule_after_sickness(
         # Cut on first week
         else:
             # Define work days
-            solver.Add(sum((var_work_days[worker, day] + p_work_days[worker, day])
-                       for day in DAYS_INDEX_1_7) >= fw_number_of_work_days)
+            solver.Add(sum((var_work_days[worker, day] - p_work_days[worker, day])
+                       for day in DAYS_INDEX_1_7) == fw_number_of_work_days)
             solver.Add(sum(var_work_days[worker, day]
                        for day in DAYS_INDEX_8_14) == sw_number_of_work_days)
 
             # Define off days
             solver.Add(sum((var_off_days[worker, day] + p_off_days[worker, day])
-                       for day in DAYS_INDEX_1_7) >= fw_number_of_off_days)
+                       for day in DAYS_INDEX_1_7) == fw_number_of_off_days)
             solver.Add(sum(var_off_days[worker, day]
                        for day in DAYS_INDEX_8_14) == sw_number_of_off_days)
 
             # Define reserve days
             solver.Add(sum((var_reserve_days[worker, day] + p_reserve[worker, day])
-                       for day in DAYS_INDEX_1_7) >= fw_number_of_reserve_days)
+                       for day in DAYS_INDEX_1_7) == fw_number_of_reserve_days)
             solver.Add(sum(var_reserve_days[worker, day]
                        for day in DAYS_INDEX_8_14) == sw_number_of_reserve_days)
 
@@ -451,7 +456,7 @@ def reoptimize_schedule_after_sickness(
                 roster.off_days = res_off_days
                 roster.reserve_days = res_reserve_days
                 roster.published = True
-                # roster.save()
+                roster.save()
             else:
                 roster = Roster.objects.get(
                     week_number=current_week_number, owner=user)
@@ -473,7 +478,7 @@ def reoptimize_schedule_after_sickness(
                 roster.off_days = res_off_days
                 roster.reserve_days = res_reserve_days
                 roster.published = True
-                # roster.save()
+                roster.save()
 
                 roster = Roster.objects.get(
                     week_number=next_week_number, owner=user)
@@ -495,7 +500,7 @@ def reoptimize_schedule_after_sickness(
                 roster.off_days = res_off_days
                 roster.reserve_days = res_reserve_days
                 roster.published = True
-                # roster.save()
+                roster.save()
 
         # Retrieve and print statistics
         print('Solver runtime (ms):', solver.WallTime())

@@ -612,5 +612,5 @@ def call_agent(request: Any) -> None:
     memory.chat_memory.add_message(AIMessage(content=response["output"]))
 
     msg = Message(text=response["output"], sent_by_user=False,
-                  date=datetime.datetime.now(), owner=request.user)
+                  date=datetime.now(), owner=request.user)
     msg.save()

@@ -324,7 +324,7 @@ class UserDataView(APIView):
         return JsonResponse({'error': 'User is not authenticated'}, status=401)
 
 
-def get_user_details() -> JsonResponse:
+def get_user_details(request) -> JsonResponse:
     """
     Retrieves a list of users excluding those in the 'Supervisor' group.
 
