@@ -1,4 +1,5 @@
 from typing import Dict, Tuple
+from itertools import islice
 from django.contrib.auth.models import User
 from ortools.linear_solver import pywraplp
 
@@ -124,6 +125,7 @@ def reoptimize_schedule_after_sickness(
     p_work_days = {}
     p_off_days = {}
     p_reserve = {}
+    p_res_day = {}
 
     current_week_number = get_current_week_number(0)
     next_week_number = get_current_week_number(1)
@@ -141,6 +143,8 @@ def reoptimize_schedule_after_sickness(
 
     fw_reserve_call_in = {}
     sw_reserve_call_in = {}
+    fw_day_off_call_in = {}
+    sw_day_off_call_in = {}
 
     workers = []
 
@@ -153,23 +157,23 @@ def reoptimize_schedule_after_sickness(
             1,
             ROSTER_INDEX_END
         )
-        work_days[username] = get_day_mapping(
-            current_week_roster.work_days + next_week_roster.work_days,
-            FIRST_WEEK_DAY_INDEX_START,
-            SECOND_WEEK_DAY_INDEX_END
-        )
-        off_days_roster_current_week = merge_roster_strings(
-            current_week_roster.off_days,
+        work_days_roster_current_week = merge_roster_strings(
+            current_week_roster.work_days,
             current_week_roster.reserve_call_in_days,
             current_week_roster.day_off_call_in_days
         )
-        off_days_roster_next_week = merge_roster_strings(
-            next_week_roster.off_days,
+        work_days_roster_next_week = merge_roster_strings(
+            next_week_roster.work_days,
             next_week_roster.reserve_call_in_days,
             next_week_roster.day_off_call_in_days
         )
+        work_days[username] = get_day_mapping(
+            work_days_roster_current_week + work_days_roster_next_week,
+            FIRST_WEEK_DAY_INDEX_START,
+            SECOND_WEEK_DAY_INDEX_END
+        )
         off_days[username] = get_day_mapping(
-            off_days_roster_current_week + off_days_roster_next_week,
+            current_week_roster.off_days + next_week_roster.off_days,
             FIRST_WEEK_DAY_INDEX_START, SECOND_WEEK_DAY_INDEX_END
         )
         reserve_days[username] = get_day_mapping(
@@ -190,6 +194,8 @@ def reoptimize_schedule_after_sickness(
 
         fw_reserve_call_in[username] = current_week_roster.reserve_call_in
         sw_reserve_call_in[username] = next_week_roster.reserve_call_in
+        fw_day_off_call_in[username] = current_week_roster.day_off_call_in
+        sw_day_off_call_in[username] = next_week_roster.day_off_call_in
 
     min_workers = get_min_workers_both_weeks(multiplier)
 
@@ -217,6 +223,8 @@ def reoptimize_schedule_after_sickness(
                 f'p_off_days[{worker},{day}]')
             p_reserve[worker, day] = solver.BoolVar(
                 f'p_reserve[{worker},{day}]')
+            p_res_day[worker, day] = solver.BoolVar(
+                f'p_res_day[{worker},{day}]')
 
     shift_range = (day_index - 1) * 3 + 1
     day_range = day_index
@@ -228,12 +236,13 @@ def reoptimize_schedule_after_sickness(
                 int(schedules[worker][shift]), int(schedules[worker][shift]))
 
         for day in range(1, day_range):
-            var_work_days[worker, day].SetBounds(
-                int(work_days[worker][day]), int(work_days[worker][day]))
-            var_off_days[worker, day].SetBounds(
-                int(off_days[worker][day]), int(off_days[worker][day]))
-            var_reserve_days[worker, day].SetBounds(
-                int(reserve_days[worker][day]), int(reserve_days[worker][day]))
+            if int(vacation[worker][day]) != 1 and int(sickness[worker][day]) != 1:
+                var_work_days[worker, day].SetBounds(
+                    int(work_days[worker][day]), int(work_days[worker][day]))
+                var_off_days[worker, day].SetBounds(
+                    int(off_days[worker][day]), int(off_days[worker][day]))
+                var_reserve_days[worker, day].SetBounds(
+                    int(reserve_days[worker][day]), int(reserve_days[worker][day]))
 
         for day in DAYS_INDEX_1_14:
             if int(vacation[worker][day]) == 1 or int(sickness[worker][day]) == 1:
@@ -264,23 +273,17 @@ def reoptimize_schedule_after_sickness(
             objective.SetCoefficient(var_off_days[worker, day], coefficient)
 
             coefficient = float(reserve_days[worker][day])
-            objective.SetCoefficient(var_reserve_days[worker, day], coefficient)
+            objective.SetCoefficient(
+                var_reserve_days[worker, day], coefficient)
 
             objective.SetCoefficient(p_work_days[worker, day], -e)
             objective.SetCoefficient(p_off_days[worker, day], -f)
             objective.SetCoefficient(p_reserve[worker, day], -g)
+            objective.SetCoefficient(p_res_day[worker, day], 1)
 
     objective.SetMaximization()
 
     for worker in workers:
-        fw_vacation = sum(int(vac)
-                          for vac in list(vacation[worker].values())[:7])
-        sw_vacation = sum(int(vac)
-                          for vac in list(vacation[worker].values())[-7:])
-        fw_sickness = sum(int(sick)
-                          for sick in list(sickness[worker].values())[:7])
-        sw_sickness = sum(int(sick)
-                          for sick in list(sickness[worker].values())[-7:])
         fw_vacation_binary = ''.join(list(vacation[worker].values())[:7])
         sw_vacation_binary = ''.join(list(vacation[worker].values())[-7:])
         fw_sickness_binary = ''.join(list(sickness[worker].values())[:7])
@@ -297,19 +300,32 @@ def reoptimize_schedule_after_sickness(
             fw_max_consecutive_number_of_vac_days, fw_max_consecutive_number_of_sick_days)
         sw_max_cnsc_num_vac_sick_days = max(
             sw_max_consecutive_number_of_vac_days, sw_max_consecutive_number_of_sick_days)
-        fw_vac_sick_sum = fw_vacation + fw_sickness
-        sw_vac_sick_sum = sw_vacation + sw_sickness
-        fw_number_of_work_days = min(4, 7 - fw_vac_sick_sum)
-        fw_number_of_off_days = max(2 - fw_vac_sick_sum, 0)
-        fw_number_of_reserve_days = 1 if fw_vac_sick_sum < 3 else 0
-        sw_number_of_work_days = min(4, 7 - sw_vac_sick_sum)
-        sw_number_of_off_days = max(2 - sw_vac_sick_sum, 0)
-        sw_number_of_reserve_days = 1 if sw_vac_sick_sum < 3 else 0
-        
+
+        fw_work_days = sum(int(wd)
+                           for wd in list(work_days[worker].values())[:7])
+        sw_work_days = sum(int(wd)
+                           for wd in list(work_days[worker].values())[-7:])
+        fw_off_days = sum(int(od)
+                          for od in list(off_days[worker].values())[:7])
+        sw_off_days = sum(int(od)
+                          for od in list(off_days[worker].values())[-7:])
+        fw_reserve_days = sum(int(rd)
+                              for rd in list(reserve_days[worker].values())[:7])
+        sw_reserve_days = sum(int(rd)
+                              for rd in list(reserve_days[worker].values())[-7:])
+
+        fw_number_of_work_days = fw_work_days
+        fw_number_of_off_days = fw_off_days
+        fw_number_of_reserve_days = fw_reserve_days
+        sw_number_of_work_days = sw_work_days
+        sw_number_of_off_days = sw_off_days
+        sw_number_of_reserve_days = sw_reserve_days
+
         for day in DAYS_INDEX_1_14:
             solver.Add(p_work_days[worker, day] >= 0)
             solver.Add(p_off_days[worker, day] >= 0)
             solver.Add(p_reserve[worker, day] >= 0)
+            solver.Add(p_res_day[worker, day] >= 0)
 
         # Cut on second week
         if day_index > 7:
@@ -352,10 +368,10 @@ def reoptimize_schedule_after_sickness(
 
             # Each day must have at least 2 reserve workers
             for day in range(day_range, 8):
-                solver.Add(sum(var_reserve_days[worker, day]
+                solver.Add(sum(var_reserve_days[worker, day] + p_res_day[worker, day]
                            for worker in workers) >= 2 * multiplier)
             for day in DAYS_INDEX_8_14:
-                solver.Add(sum(var_reserve_days[worker, day]
+                solver.Add(sum(var_reserve_days[worker, day] + p_res_day[worker, day]
                            for worker in workers) >= 2 * multiplier)
 
         # Each day will be a working, off, reserve or a vacation day
@@ -366,12 +382,12 @@ def reoptimize_schedule_after_sickness(
                        var_vacation[worker, day] +
                        var_sickness[worker, day] == 1)
 
-        # Each worker can only have shifts on workdays
+        # # Each worker can only have shifts on workdays
         for day in DAYS_INDEX_1_14:
             solver.Add(sum(var_schedule[worker, (day - 1) * 3 + k]
                        for k in range(1, 4)) == var_work_days[worker, day])
 
-        # Each worker can work at most one shift per day
+        # # Each worker can work at most one shift per day
         for day in DAYS_INDEX_1_14:
             solver.Add(sum(var_schedule[worker, (day - 1) * 3 + k]
                        for k in range(1, 4)) <= 1)
@@ -379,7 +395,8 @@ def reoptimize_schedule_after_sickness(
         if (
             fw_number_of_off_days > 0 and
             fw_max_cnsc_num_vac_sick_days > 1 and
-            not fw_reserve_call_in[worker]
+            not fw_reserve_call_in[worker] and
+            not fw_day_off_call_in[worker]
         ):
             # Ensure a reserve day follows a day off
             for day in DAYS_INDEX_1_6:
@@ -391,13 +408,15 @@ def reoptimize_schedule_after_sickness(
                 solver.Add(var_off_days[worker, day - 1]
                            <= 1 - var_reserve_days[worker, day])
 
+            # Each worker can work at most 2 night shifts
             solver.Add(sum(var_schedule[worker, (day - 1) * 3 + 3]
                        for day in DAYS_INDEX_1_7) <= 2)
 
         if (
             sw_number_of_off_days > 0 and
             sw_max_cnsc_num_vac_sick_days > 1 and
-            not sw_reserve_call_in[worker]
+            not sw_reserve_call_in[worker] and
+            not sw_day_off_call_in[worker]
         ):
             # Ensure a reserve day follows a day off
             for day in DAYS_INDEX_8_13:
@@ -414,9 +433,9 @@ def reoptimize_schedule_after_sickness(
                            for day in DAYS_INDEX_8_14) <= 2)
 
         # After night shifts, workers can't have morning or afternoon shift in both weeks
-        for day in DAYS_INDEX_8_13:  # 1..13
-            solver.Add(sum(var_schedule[worker, 3 + (day - 1) * 3 + k]
-                       for k in range(3)) <= 1)
+        # for day in DAYS_INDEX_8_13:  # 1..13
+        #     solver.Add(sum(var_schedule[worker, 3 + (day - 1) * 3 + k]
+        #                for k in range(3)) <= 1)
 
     # Minimum required workers for each shift
     for shift in ROSTER_INDEX_1_42:
@@ -427,6 +446,14 @@ def reoptimize_schedule_after_sickness(
     status = solver.Solve()
 
     if status == pywraplp.Solver.OPTIMAL:
+        schedule_count = 0
+        work_days_count = 0
+        off_days_count = 0
+        reserve_days_count = 0
+        schedule_add = 0
+        work_days_add = 0
+        off_days_add = 0
+        reserve_days_add = 0
         for worker in workers:
             res_schedule = ""
             res_work_days = ""
@@ -464,6 +491,10 @@ def reoptimize_schedule_after_sickness(
                 for shift in ROSTER_INDEX_1_21:
                     res_schedule += str(
                         int(var_schedule[worker, shift].solution_value()))
+
+                schedule_count += sum(1 for i in range(len(res_schedule)) if (
+                    res_schedule[i] == '1' and roster.schedule[i] == '1') or (res_schedule[i] == '0' and roster.schedule[i] == '0'))
+                schedule_add += 21
                 roster.schedule = res_schedule
 
                 for day in DAYS_INDEX_1_7:
@@ -474,8 +505,19 @@ def reoptimize_schedule_after_sickness(
                     res_reserve_days += str(
                         int(var_reserve_days[worker, day].solution_value()))
 
+                work_days_count += sum(1 for i in range(len(res_work_days)) if (
+                    res_work_days[i] == '1' and roster.work_days[i] == '1') or (res_work_days[i] == '0' and roster.work_days[i] == '0'))
+                work_days_add += 7
                 roster.work_days = res_work_days
+
+                off_days_count += sum(1 for i in range(len(res_off_days)) if (
+                    res_off_days[i] == '1' and roster.off_days[i] == '1') or (res_off_days[i] == '0' and roster.off_days[i] == '0'))
+                off_days_add += 7
                 roster.off_days = res_off_days
+
+                reserve_days_count += sum(1 for i in range(len(res_reserve_days)) if (
+                    res_reserve_days[i] == '1' and roster.reserve_days[i] == '1') or (res_reserve_days[i] == '0' and roster.reserve_days[i] == '0'))
+                reserve_days_add += 7
                 roster.reserve_days = res_reserve_days
                 roster.published = True
                 roster.save()
@@ -483,9 +525,18 @@ def reoptimize_schedule_after_sickness(
                 roster = Roster.objects.get(
                     week_number=next_week_number, owner=user)
 
+                res_schedule = ""
+                res_work_days = ""
+                res_off_days = ""
+                res_reserve_days = ""
+
                 for shift in ROSTER_INDEX_22_42:
                     res_schedule += str(
                         int(var_schedule[worker, shift].solution_value()))
+
+                schedule_count += sum(1 for i in range(len(res_schedule)) if (
+                    res_schedule[i] == '1' and roster.schedule[i] == '1') or (res_schedule[i] == '0' and roster.schedule[i] == '0'))
+                schedule_add += 21
                 roster.schedule = res_schedule
 
                 for day in DAYS_INDEX_8_14:
@@ -496,8 +547,19 @@ def reoptimize_schedule_after_sickness(
                     res_reserve_days += str(
                         int(var_reserve_days[worker, day].solution_value()))
 
+                work_days_count += sum(1 for i in range(len(res_work_days)) if (
+                    res_work_days[i] == '1' and roster.work_days[i] == '1') or (res_work_days[i] == '0' and roster.work_days[i] == '0'))
+                work_days_add += 7
                 roster.work_days = res_work_days
+
+                off_days_count += sum(1 for i in range(len(res_off_days)) if (
+                    res_off_days[i] == '1' and roster.off_days[i] == '1') or (res_off_days[i] == '0' and roster.off_days[i] == '0'))
+                off_days_add += 7
                 roster.off_days = res_off_days
+
+                reserve_days_count += sum(1 for i in range(len(res_reserve_days)) if (
+                    res_reserve_days[i] == '1' and roster.reserve_days[i] == '1') or (res_reserve_days[i] == '0' and roster.reserve_days[i] == '0'))
+                reserve_days_add += 7
                 roster.reserve_days = res_reserve_days
                 roster.published = True
                 roster.save()
@@ -509,7 +571,7 @@ def reoptimize_schedule_after_sickness(
     return status, solver.WallTime(), solver.NumConstraints()
 
 
-def optimize_schedule(number_of_users_to_solve: int, multiplier: float) -> Tuple[int, int, int]:
+def optimize_schedule(number_of_users_to_solve: int, multiplier: float, a, b) -> Tuple[int, int, int]:
     """
     Optimizes the worker schedule for the second week based on predefined rules, constraints, 
     and applications using a linear programming solver.
@@ -538,8 +600,8 @@ def optimize_schedule(number_of_users_to_solve: int, multiplier: float) -> Tuple
     var_vacation = {}
     var_sickness = {}
 
-    next_week_number = get_current_week_number(1)
-    application_week_number = get_current_week_number(2)
+    next_week_number = get_current_week_number(1 - a)
+    application_week_number = get_current_week_number(2 - b)
     next_week_rosters = get_rosters_by_week(
         next_week_number, number_of_users_to_solve)
     application_week_rosters = get_rosters_by_week(

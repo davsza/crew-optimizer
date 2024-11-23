@@ -212,7 +212,7 @@ def get_user_for_reserve(
             prev_week_rosters = Roster.objects.filter(
                 owner__in=users, week_number=week_number - 1)
             for prev_week_roster in prev_week_rosters:
-                if prev_week_roster.work_days[6] == "1" and prev_week_roster.schedule[20] == "1":
+                if prev_week_roster.work_days[6] == CHAR_ONE and prev_week_roster.schedule[20] == CHAR_ONE:
                     users_to_exclude.append(prev_week_roster.owner)
 
         else:
@@ -220,8 +220,8 @@ def get_user_for_reserve(
                 owner__in=users, week_number=week_number)
             for current_week_roster in current_week_rosters:
                 if (
-                    current_week_roster.work_days[day_index - 1] == "1" and
-                    current_week_roster.schedule[(day_index - 1) * 3 + 2] == "1"
+                    current_week_roster.work_days[day_index - 1] == CHAR_ONE and
+                    current_week_roster.schedule[(day_index - 1) * 3 + 2] == CHAR_ONE
                 ):
                     users_to_exclude.append(current_week_roster.owner)
 
@@ -275,6 +275,7 @@ def sickness_claim(
     else:
         last_pos = sickness_first_day_of_week + sickness_length - 1
 
+    user_roster = Roster.objects.get(owner=user, week_number=week_number)
     # sickness for current and next week
     while (
         sickness_length > 0 and
@@ -287,11 +288,15 @@ def sickness_claim(
 
         for day_index in range(first_pos, last_pos):
             users_for_reserve = [roster.owner for roster in [
-                roster for roster in rosters if roster.reserve_days[day_index] == "1"]]
+                roster for roster in rosters if roster.reserve_days[day_index] == CHAR_ONE]]
 
             if users_for_reserve:
-                if user_roster.work_days[day_index] == "1":
-                    shift_index = user_roster.schedule[day_index * 3:day_index * 3 + 3].index("1")
+                if (
+                    user_roster.work_days[day_index] == CHAR_ONE or
+                    user_roster.reserve_call_in_days[day_index] == CHAR_ONE or
+                    user_roster.day_off_call_in_days[day_index] == CHAR_ONE
+                ):
+                    shift_index = user_roster.schedule[day_index * 3:day_index * 3 + 3].index(CHAR_ONE)
 
                     reserve_user = get_user_for_reserve(
                         users_for_reserve, year, week_number, day_index, shift_index)
@@ -300,7 +305,7 @@ def sickness_claim(
                         recalculate = True
                         day_off_call_in_index = day_index
                         break
-
+                    
                     reserve_user_roster = Roster.objects.get(
                         owner=reserve_user, week_number=week_number)
 
@@ -323,24 +328,34 @@ def sickness_claim(
                         CHAR_ZERO +
                         user_roster.work_days[day_index + 1:]
                     )
+                    user_roster.reserve_call_in_days = (
+                        user_roster.reserve_call_in_days[:day_index] +
+                        CHAR_ZERO +
+                        user_roster.reserve_call_in_days[day_index + 1:]
+                    )
+                    user_roster.day_off_call_in_days = (
+                        user_roster.day_off_call_in_days[:day_index] +
+                        CHAR_ZERO +
+                        user_roster.day_off_call_in_days[day_index + 1:]
+                    )
                     reserve_user_roster.save()
 
                 else:
-                    if user_roster.off_days[day_index] == "1":
+                    if user_roster.off_days[day_index] == CHAR_ONE:
                         user_roster.off_days = (
                             user_roster.off_days[:day_index] +
                             CHAR_ZERO +
                             user_roster.off_days[day_index + 1:]
                         )
 
-                    if user_roster.reserve_days[day_index] == "1":
+                    if user_roster.reserve_days[day_index] == CHAR_ONE:
                         user_roster.reserve_days = (
                             user_roster.reserve_days[:day_index] + \
                             CHAR_ZERO +
                             user_roster.reserve_days[day_index + 1:]
                         )
 
-                    if user_roster.vacation[day_index] == "1":
+                    if user_roster.vacation[day_index] == CHAR_ONE:
                         user_roster.vacation = (
                             user_roster.vacation[:day_index] +
                             CHAR_ZERO +
@@ -373,14 +388,14 @@ def sickness_claim(
 
     if recalculate:
         day_index = day_off_call_in_index
-        shift_index = user_roster.schedule[day_index * 3:day_index * 3 + 3].index("1")
+        shift_index = user_roster.schedule[day_index * 3:day_index * 3 + 3].index(CHAR_ONE)
         user_roster = Roster.objects.get(owner=user, week_number=week_number)
 
         rosters = get_rosters_by_week(week_number)
         rosters_with_day_off = [
             roster
             for roster in rosters
-            if roster.off_days[day_index] == "1"
+            if roster.off_days[day_index] == CHAR_ONE
         ]
 
         users_for_day_off_call_in = [
@@ -390,7 +405,8 @@ def sickness_claim(
 
         day_off_user = random.choice(users_for_day_off_call_in)
         day_off_user_roster = Roster.objects.get(owner=day_off_user, week_number=week_number)
-        
+        day_off_user_roster.day_off_call_in = True
+                
         day_off_user_roster.off_days = (
             day_off_user_roster.off_days[:day_index] +
             CHAR_ZERO +
@@ -411,29 +427,18 @@ def sickness_claim(
         user_roster.schedule = (
             user_roster.schedule[:day_index * 3 + shift_index] +
             CHAR_ZERO +
-            user_roster.schedule[day_index * 3 + shift_index + 1:])
+            user_roster.schedule[day_index * 3 + shift_index + 1:]
+        )
         user_roster.sickness = (
             user_roster.sickness[:day_index] +
             CHAR_ONE +
             user_roster.sickness[day_index + 1:]
         )
-        
-        for roster in rosters:
-            if contains_character_from_index(roster.reserve_call_in_days, day_index + 1, "1"):
-                roster.reserve_call_in_days = (
-                    roster.reserve_call_in_days[:day_index + 1] +
-                    CHAR_ZERO * (len(roster.reserve_call_in_days) - day_index - 1)
-                )
-                roster.reserve_call_in = False
-
-            if contains_character_from_index(roster.day_off_call_in_days, day_index + 1, "1"):
-                roster.day_off_call_in_days = (
-                    roster.day_off_call_in_days[:day_index + 1] +
-                    CHAR_ZERO * (len(roster.day_off_call_in_days) - day_index - 1)
-                )
-                roster.day_off_call_in = False
-
-            roster.save()
+        user_roster.work_days = (
+            user_roster.work_days[:day_index] +
+            CHAR_ZERO +
+            user_roster.work_days[day_index + 1:]
+        )
             
         days_switched += 1
         remaining_days_to_set_to_sick = sickness_length - days_switched
@@ -451,6 +456,30 @@ def sickness_claim(
                     user_roster.sickness[:day_index] +
                     (7 - day_index) * CHAR_ONE
                 )
+                user_roster.work_days = (
+                    user_roster.work_days[:day_index] +
+                    (7 - day_index) * CHAR_ZERO
+                )
+                user_roster.off_days = (
+                    user_roster.off_days[:day_index] +
+                    (7 - day_index) * CHAR_ZERO
+                )
+                user_roster.reserve_days = (
+                    user_roster.reserve_days[:day_index] +
+                    (7 - day_index) * CHAR_ZERO
+                )
+                user_roster.reserve_call_in_days = (
+                    user_roster.reserve_call_in_days[:day_index] +
+                    (7 - day_index) * CHAR_ZERO
+                )
+                user_roster.day_off_call_in_days = (
+                    user_roster.day_off_call_in_days[:day_index] +
+                    (7 - day_index) * CHAR_ZERO
+                )
+                user_roster.schedule = (
+                    user_roster.schedule[:day_index * 3] +
+                    (21 - day_index * 3) * CHAR_ZERO
+                )
                 remaining_days_to_set_to_sick -= (7 - day_index)
                 day_index = 0
                 week_number_for_remaining_sick += 1
@@ -462,17 +491,71 @@ def sickness_claim(
                 remaining_days_to_set_to_sick * CHAR_ONE + 
                 user_roster.sickness[-(7 - remaining_days_to_set_to_sick):]
             )
+            user_roster.work_days = (
+                remaining_days_to_set_to_sick * CHAR_ZERO + 
+                user_roster.work_days[-(7 - remaining_days_to_set_to_sick):]
+            )
+            user_roster.off_days = (
+                remaining_days_to_set_to_sick * CHAR_ZERO + 
+                user_roster.off_days[-(7 - remaining_days_to_set_to_sick):]
+            )
+            user_roster.reserve_days = (
+                remaining_days_to_set_to_sick * CHAR_ZERO + 
+                user_roster.reserve_days[-(7 - remaining_days_to_set_to_sick):]
+            )
+            user_roster.reserve_call_in_days = (
+                remaining_days_to_set_to_sick * CHAR_ZERO + 
+                user_roster.reserve_call_in_days[-(7 - remaining_days_to_set_to_sick):]
+            )
+            user_roster.day_off_call_in_days = (
+                remaining_days_to_set_to_sick * CHAR_ZERO + 
+                user_roster.day_off_call_in_days[-(7 - remaining_days_to_set_to_sick):]
+            )
+            user_roster.schedule = (
+                3 * remaining_days_to_set_to_sick * CHAR_ZERO + 
+                user_roster.schedule[-(21 - remaining_days_to_set_to_sick * 3):]
+            )
         else:
             user_roster.sickness = (
                 user_roster.sickness[:day_index] +
                 remaining_days_to_set_to_sick * CHAR_ONE +
                 (7 - remaining_days_to_set_to_sick - day_index) * CHAR_ZERO
             )
+            user_roster.work_days = (
+                user_roster.work_days[:day_index] +
+                remaining_days_to_set_to_sick * CHAR_ZERO +
+                user_roster.work_days[remaining_days_to_set_to_sick + day_index:]
+            )
+            user_roster.off_days = (
+                user_roster.off_days[:day_index] +
+                remaining_days_to_set_to_sick * CHAR_ZERO +
+                user_roster.off_days[remaining_days_to_set_to_sick + day_index:]
+            )
+            user_roster.reserve_days = (
+                user_roster.reserve_days[:day_index] +
+                remaining_days_to_set_to_sick * CHAR_ZERO +
+                user_roster.reserve_days[remaining_days_to_set_to_sick + day_index:]
+            )
+            user_roster.reserve_call_in_days = (
+                user_roster.reserve_call_in_days[:day_index] +
+                remaining_days_to_set_to_sick * CHAR_ZERO +
+                user_roster.reserve_call_in_days[remaining_days_to_set_to_sick + day_index:]
+            )
+            user_roster.day_off_call_in_days = (
+                user_roster.day_off_call_in_days[:day_index] +
+                remaining_days_to_set_to_sick * CHAR_ZERO +
+                user_roster.day_off_call_in_days[remaining_days_to_set_to_sick + day_index:]
+            )
+            user_roster.schedule = (
+                user_roster.schedule[:day_index * 3] +
+                3 * remaining_days_to_set_to_sick * CHAR_ZERO +
+                user_roster.schedule[:(remaining_days_to_set_to_sick + day_index) * 3]
+            )
             
         user_roster.save()
         day_index_opt = 7 * (week_number - get_current_week_number(0)) + day_index_opt
 
-        reoptimize_schedule_after_sickness(15, 1, day_index + 1)
+        reoptimize_schedule_after_sickness(15, 1, day_index_opt + 1)
 
     # sickness for application week and onwards
     if end_date > first_day_for_application_week:

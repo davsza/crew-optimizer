@@ -1,7 +1,7 @@
 import json
 from typing import Dict
 
-from .constants import CHAR_ONE, CHAR_ZERO
+from .constants import CHAR_ONE, CHAR_ZERO, CHAR_X
 
 
 def is_uniform_with_char(s: str, character: str) -> bool:
@@ -67,16 +67,16 @@ def convert_roster_string_to_json(roster_str: str) -> str:
         start_index = i * 3
         ret_json[day] = {
             "morning": (
-                True if roster_str[start_index] == "1"
-                else (None if roster_str[start_index] == "x" else False)
+                True if roster_str[start_index] == CHAR_ONE
+                else (None if roster_str[start_index] == CHAR_X else False)
             ),
             "afternoon": (
-                True if roster_str[start_index + 1] == "1"
-                else (None if roster_str[start_index + 1] == "x" else False)
+                True if roster_str[start_index + 1] == CHAR_ONE
+                else (None if roster_str[start_index + 1] == CHAR_X else False)
             ),
             "night": (
-                True if roster_str[start_index + 2] == "1"
-                else (None if roster_str[start_index + 2] == "x" else False)
+                True if roster_str[start_index + 2] == CHAR_ONE
+                else (None if roster_str[start_index + 2] == CHAR_X else False)
             )
         }
 
@@ -111,7 +111,7 @@ def convert_json_to_roster_string(roster_json: Dict, parse_none_as_x: bool = Fal
             value = roster.get(shift, None)
 
             if parse_none_as_x and value is None:
-                values_string += "x"
+                values_string += CHAR_X
             else:
                 values_string += str(int(bool(value)))
 

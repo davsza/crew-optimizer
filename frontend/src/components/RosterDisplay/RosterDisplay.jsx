@@ -24,7 +24,10 @@ const RosterDisplay = ({
         reserveCallIn[day] === "1" ? "reserveCallIn" : ""
       } ${dayOffCallIn[day] === "1" ? "dayOffCallIn" : ""}`}
     >
-      {(workDays[day] === "1" || reserveCallIn[day] === "1" || application) &&
+      {(workDays[day] === "1" ||
+        reserveCallIn[day] === "1" ||
+        dayOffCallIn[day] === "1" ||
+        application) &&
       vacation[day] !== "1" &&
       sickness[day] !== "1" ? (
         scheduleOfTheDay.map((roster, index) => {
